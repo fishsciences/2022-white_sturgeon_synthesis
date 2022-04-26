@@ -1,11 +1,11 @@
 # Combining tag tables to prep for UCD BARD query
 # M. Johnston
 # Wed Apr 20 13:48:56 2022 ------------------------------
-
+source('R/utils.R') # sources data-dir script to set dropbox path
 # columns needed:
 #Tag_ID, Tag_ser_num, Codespace, Tag_type, Frequency_kHz, Release_date_time, Release_location, Study_ID
 
-d = readxl::read_excel("data/Lodi/LFWO_SJR_WST_Acoustic_Tags.xlsx")
+d = readxl::read_excel(file.path(data_dir, "Lodi/LFWO_SJR_WST_Acoustic_Tags.xlsx"))
 
 d = d[ , c("TagCode", "SN", "DateTagged", "FL_cm", "PIT")]
 
@@ -13,6 +13,7 @@ d = ybt::parse_tagid_col(df = d, tagcol = "TagCode", sepchar = "-")
 str(d)
 
 d$Frequency_kHz = 69
+# no data on time of tagging/release; default to 8am PST on the date tagged:
 d$Release_date_time = lubridate::ymd_hms(paste(d$DateTagged, "08:00:00", sep = " "), tz = "Etc/GMT+8")
 d$Release_location = "San Joaquin River"
 d$Study_ID = "SJR WST/Jackson/Heironimus"
@@ -22,7 +23,7 @@ range(d$DateTagged)
 
 write.csv(d, "data_clean/JacksonHeironimusSJRWST_NEWTAGS.csv", row.names = FALSE)
 
-y = readxl::read_excel("data/Yolo/wst_tags.xlsx")
+y = readxl::read_excel(file.path(data_dir, "Yolo/wst_tags.xlsx"))
 y = y[ , c("DateTagged", "FL", "CodeSpace", "TagID", "TagSN")]
 y = dplyr::rename(y, FL_cm = FL,
                      Tag_ser_num = TagSN)
@@ -33,7 +34,7 @@ y$Study_ID = "UCD Yolo Bypass WST/Johnston"
 y$DateTagged = as.Date(y$DateTagged)
 range(y$DateTagged)
 
-m = read.csv("data/Sacramento/Miller_USACE_white_sturgeon_tag_ids.csv")
+m = read.csv(file.path(data_dir, "Sacramento/Miller_USACE_white_sturgeon_tag_ids.csv"))
 str(m)
 m = m[, c(
   "Date",

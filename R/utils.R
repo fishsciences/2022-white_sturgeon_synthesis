@@ -2,7 +2,7 @@
 # M. Johnston 
 # Utility/convenience functions for analysis 
 # Tuesday 2022-04-26 12:14:53 ----------------# 
-
+source("R/set_data_dir.R")
 
 
 
