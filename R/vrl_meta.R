@@ -1,11 +1,10 @@
-# Lodi data EDA
+# Lodi vrl data EDA
 # M. Johnston
 # Tue Mar 15 13:31:37 2022 ------------------------------
 
-library(ybt)
-check_vrls
-
-files = list.files("~/DropboxCFS/NewPROJECTS/DSCSAC-2021-YR1-White_Sturgeon_Telemetry_Synthesis/WORKING/Data/Lodi/LFWO_SJR_WST_ALL_VR2W.VRL/", full.names = TRUE)
+data_dir = readRDS("data/data_dir_local.rds")
+files = list.files(file.path(data_dir, "Lodi/LFWO_SJR_WST_ALL_VR2W.VRL"), full.names = TRUE)
+files2 = grep(pattern = "VR2W180_|-RLD_", files, invert = TRUE, value = TRUE) # invert gives us all the things that don't match, and value = TRUE says return the actual string, not the index of the location of the string
 
 # extract rec SN
 # extract date of VRL
@@ -15,15 +14,46 @@ vrl_meta = function(full_filepath) {
   # ( ) creates a capture group
   # pattern: has the prefix, and the first capture group (alphanumeric, 6 characters), and .* = any character
   # replacement: replaces the pattern with the first capture group, which will be the serial number
-  RecSN = gsub("VR2W_([0-9]{6})_.*", replacement = "\\1", x = basename(full_filepath))
-  Date = gsub("VR2W_[0-9]{6}_([0-9]{8})_.*", replacement = "\\1", x = basename(full_filepath))
+  data.frame(Receiver = as.integer(gsub("VR2W_([0-9]{6})_.*", replacement = "\\1", x = basename(full_filepath))),
+  Date = as.Date(gsub("VR2W_[0-9]{6}_([0-9]{8})_.*", replacement = "\\1", x = basename(full_filepath)),
+                 format = "%Y%m%d")
+  )
+  # could also have split on the underscore
+}
+
+# x = strsplit(basename(files), split = "_") # how could I put this into a data.frame?
+# ans = as.integer(sapply(x, "[[", 2)) # rec SNs
+# date = as.Date(sapply(x, "[[", 3), format = "%Y%m%d")
+
+ans = do.call(rbind, lapply(files2, vrl_meta))
+
+
+# Goal: match receiver SNs with deployments SN, and make sure all dates fall within the window of deployments mentioned.
+
+dep = as.data.frame(readxl::read_excel(file.path(data_dir, "Lodi/LFWO_SJR_WST_Receiver_Deployment.xlsx")))
+
+
+dim(dep)
+length(unique(dep$Receiver))
+dep$combo = paste(dep$Station, dep$Receiver, sep = "-")
+length(unique(dep$combo))
+
+ans$chk = NA
+
+for(i in 1:nrow(ans)) {
+  x = ans$Receiver[i]
+  matching_in_dep = dep[dep$Receiver == x, ]
   
-  # could also have split on the underscore and 
+  d = ans$Date[i] 
   
+  ans$chk[i] = sum(d >= matching_in_dep$DeploymentStart & d <= matching_in_dep$DeploymentEnd)
   
 }
 
-str = "VR2W_113011_20120517_1_edited.vrl"
-x = strsplit(basename(files), split = "_")
-ans = as.integer(sapply(x, "[[", 2))
-date = as.Date(sapply(x, "[[", 3), format = "%Y%m%d")
+ans$chk = factor(ans$chk, levels = 0:2, labels = c("No match within deployments",
+                                                   "Date falls within a deployment",
+                                                   "Multiple matches within a deployment"))
+
+ans[ans$chk == "Multiple matches within a deployment", ]
+
+dep[dep$Receiver == 113007, ]
