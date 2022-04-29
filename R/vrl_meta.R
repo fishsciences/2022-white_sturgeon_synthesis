@@ -57,3 +57,30 @@ ans$chk = factor(ans$chk, levels = 0:2, labels = c("No match within deployments"
 ans[ans$chk == "Multiple matches within a deployment", ]
 
 dep[dep$Receiver == 113007, ]
+
+# Check Start is before end deployment
+stopifnot(all(dep$DeploymentStart < dep$DeploymentEnd))
+
+# Receivers at multiple locations
+tt = table(dep$Receiver)
+tt[ tt > 1 ]
+
+# "combo" might already resolve these
+stopifnot(all(sort(table(dep$combo)) == 1))
+
+# deployment gaps and coverage
+tmp = split(dep, dep$Station)
+
+sapply(tmp, nrow)
+
+dep_range = lapply(tmp, function(df){
+    c(min(df$DeploymentStart), max(df$DeploymentEnd))
+})
+
+dep_gaps = lapply(tmp, function(df) {
+    if(nrow(df) > 1) {
+        df = df[order(df$DeploymentStart),]
+        difftime(df$DeploymentStart[-1], df$DeploymentEnd[-nrow(df)], units = "days")
+    } else
+        0
+})

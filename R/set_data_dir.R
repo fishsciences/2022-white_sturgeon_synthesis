@@ -5,6 +5,7 @@ data_dir =
   switch(Sys.info()["user"],
          myfanwyjohnston = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data",
          matt = "/home/matt/consulting/cfs/Projects/WST_Synthesis/Data/",
+         mattespe = "/home/mattespe/consulting/cfs/Projects/2022-white_sturgeon_synthesis/data",
          stop("User not known")
   )
 
