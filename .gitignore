@@ -5,3 +5,5 @@
 .Rproj.*
 *.o
 *.so
+.Renviron
+.DS_Store
