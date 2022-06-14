@@ -1,0 +1,53 @@
+library(ybt)
+library(RSQLite)
+library(data.table)
+
+sql_loc = "~/Downloads/ybt_database.sqlite"
+bard_loc = "~/Downloads/allBARDdets_2022-06-03.rds"
+
+bard = readRDS(bard_loc)
+
+con = dbConnect(RSQLite::SQLite(), sql_loc)
+
+# what does DB look like?
+dbListTables(con)
+
+lapply(dbListTables(con), function(tbl) dbListFields(con, tbl))
+
+# Check
+tz(bard$Detect_date_time)
+
+# Format bard same as detection table in SQLite
+bard$DateTimeUTC = bard$Detect_date_time
+
+# this seems OK?
+bard$Receiver = paste0("VR2W-", bard$Receiver_ser_num)
+bard$TagID = paste(bard$Codespace, bard$Tag_ID, sep = "-")
+bard[,c("TagName", "TagSN")] = NA
+bard$SensorValue = bard$Data
+bard$SensorUnit = bard$Units
+
+dets = dbGetQuery(con, "SELECT * FROM detections;")
+dets$DateTimeUTC = as.POSIXct(dets$DateTimeUTC, tz = "UTC")
+cols = dbListFields(con, "detections")
+
+# Combine and find dups
+tmp = as.data.table(rbind(dets[,cols], bard[,cols]))
+# Need to exclude NA cols, because not marked as dups
+i = duplicated(tmp[,c("DateTimeUTC", "Receiver", "TagID")]) # data.table method much faster 
+table(i)
+
+in_sql = i[(nrow(dets)+1):length(i)]
+
+stopifnot(length(in_sql) == nrow(bard))
+
+table(in_sql)
+stopifnot(sum(in_sql) == sum(i)) # Sql should not have duplicates
+
+## We should be able to insert these directly into the sqlite DB without issue
+bard_tmp = bard[,cols]
+bard_tmp$DateTimeUTC = as.character(bard_tmp$DateTimeUTC, tz = "UTC") # Needs to be character going into SQLite
+
+dbDisconnect(con) # will reconnect below
+# Should remove dups automatically
+ybt_db_append(bard_tmp, "detections", sql_loc)
