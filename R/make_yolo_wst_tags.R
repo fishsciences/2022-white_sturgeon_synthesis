@@ -14,8 +14,12 @@ con = RSQLite::dbConnect(drv = RSQLite::SQLite(), db_path)
 # Get full data from database
 wst = dbGetQuery(con, "select * from wst") # wst tags only
 
+dets = dbGetQuery(con,"select * from detections") # detections
+
 # close connection
 dbDisconnect(con)
+
+saveRDS(dets, "data/yolo_detections.rds")
 
 saveRDS(wst, "data/wst_yolo.rds")
 

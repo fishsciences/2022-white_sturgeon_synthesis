@@ -74,3 +74,11 @@ x = merge(m, y, all = TRUE)
 colSums(is.na(x))
 
 write.csv(x, "data_clean/MillerJohnston_WSTUCD_OLDTAGS.csv", row.names = FALSE)
+
+str(x)
+str(d)
+all.tags = merge(x, d, all = TRUE)
+csn(all.tags)
+
+dput(all.tags$TagID)
+range(all.tags$DateTagged)
