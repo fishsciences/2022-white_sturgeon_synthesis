@@ -2,8 +2,11 @@ library(ybt)
 library(RSQLite)
 library(data.table)
 
-sql_loc = "~/Downloads/ybt_database.sqlite"
-bard_loc = "~/Downloads/allBARDdets_2022-06-03.rds"
+#sql_loc = "~/Downloads/ybt_database.sqlite"
+sql_loc = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Yolo/ac_telemetry_database.sqlite"
+
+#bard_loc = "~/Downloads/allBARDdets_2022-06-03.rds"
+bard_loc = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Davis/allBARDdets_2022-06-03.rds"
 
 bard = readRDS(bard_loc)
 
@@ -37,12 +40,12 @@ tmp = as.data.table(rbind(dets[,cols], bard[,cols]))
 i = duplicated(tmp[,c("DateTimeUTC", "Receiver", "TagID")]) # data.table method much faster 
 table(i)
 
-in_sql = i[(nrow(dets)+1):length(i)]
+# duplicated rows should only be in BARD, not Yolo dets
+in_bard = i[(nrow(dets)+1):length(i)]
+stopifnot(length(in_bard) == nrow(bard)) 
 
-stopifnot(length(in_sql) == nrow(bard))
-
-table(in_sql)
-stopifnot(sum(in_sql) == sum(i)) # Sql should not have duplicates
+table(in_bard)
+stopifnot(sum(in_bard) == sum(i)) # Sql should not have duplicates
 
 ## We should be able to insert these directly into the sqlite DB without issue
 bard_tmp = bard[,cols]
