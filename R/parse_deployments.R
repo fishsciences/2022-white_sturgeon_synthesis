@@ -10,8 +10,7 @@ library(lubridate)
 ## Detection bounds: "2010-08-17" - "2022-01-01"
 
 # 1. Subset detections to date range, and make list of receivers in the detections 
-# 2. Check that those receivers are in the BARD deployments
-      # - put any missing ones into their own file to track down
+# 2. Check that those receivers are in the BARD + YOLO + SJR deployments # they are
 # 3. Subset BARD deployments to receivers our fish were detected on
 # 4. Compare those deployment record to locs
 # 5. Bring in lat/longs for matching recSN + startDep rows
@@ -22,10 +21,10 @@ library(lubridate)
 dd = readRDS("data/WST_detections.rds")
 dd$DateTimeUTC = as.POSIXct(dd$DateTimeUTC)
 d2 = as.data.table(dd)
-
 d2 = d2[d2$DateTimeUTC > ymd_hms("2010-08-17 00:00:00"), ]
 
-
+d2 = tidyr::separate(d2, col = Receiver, sep = "-", into = c("Freq", "Receiver"))
+d2$Receiver = as.integer(d2$Receiver)
 
 # BARD 2022 deployments
 bd = readRDS("data/BARD_deployments_all_2022-06-24.rds")
@@ -36,35 +35,76 @@ bd = dplyr::rename(bd,
                    End = Stop_date_time,
                    Comments = Additional_notes)
 
-bd$Receiver = as.numeric(bd$Receiver)
-
-#k69 = bd$Receiver > 99999 & bd$Receiver < 200000 
-#bd = bd[k69, ]
-
-attr(bd$Start, which = "tz")
-
-# bd$Start = lubridate::force_tz(bd$Start, tzone = "Etc/GMT+8")
-# bd$End = lubridate::force_tz(bd$End, tzone = "Etc/GMT+8")
+bd$Receiver = as.integer(bd$Receiver)
+# remove overlapping Yolo deployments, source from ybt data later
 ii = grep("YB", bd$Location_name)
 bd = bd[-ii, ]
 
+rec_dets = unique(d2$Receiver)
+rec_bd = unique(bd$Receiver)
+rec_all = c(rec_bd, yolo_sjr)
+
+all(rec_dets %in% rec_all)
+x = setdiff(rec_dets, rec_bd)
 
 
+# Subset BARD deployments to just those receivers our fish were detected on
+cols_keep = c("Location_name",
+              "Receiver",
+              "Start",
+              "End",
+              "Origin")
 
+bd2 = bd[bd$Receiver %in% rec_dets, cols_keep]
 
 # BARD
 # locations table - has lat/lons
 locs = readRDS("data/BARD_Receiver_locations_2022-06-24.rds")
 locs$Latitude = as.numeric(locs$Latitude)
 locs$Longitude = as.numeric(locs$Longitude)
-locs$Receiver = as.numeric(locs$Receiver_ser_num)
+locs$Receiver = as.integer(locs$Receiver_ser_num)
 #k69 = locs$Receiver > 99999 & locs$Receiver < 200000 
 #locs = locs[k69, ] # keep only the 69khz
 locs = locs[!is.na(locs$Receiver) & locs$Latitude != 0, ]
+locs$Start = as.POSIXct(locs$Start_date_time, format = "%F %T")
+locs$End = as.POSIXct(locs$Stop_date_time, format = "%F %T")
 
-summary(as.numeric(locs$Receiver_ser_num))
-
+summary(locs$Receiver)
 locs$Origin = "BARD 2022"
+locs2 = locs[ , cols_keep]
+
+## fuzzy search - do the receiver SNs + start times match within a day or so?
+bd2$fuzzy = NA
+bd2$nomatch = NA
+bd2$shift = NA
+
+for(i in 1:nrow(bd2)) {
+ # i = 3538
+  x = locs2$Receiver == bd2$Receiver[i] # tells which rows in locs correspond to i in bd2
+  s = locs2$Start[x] # vector of starts for corresponding receivers in both tables
+  bd2$nomatch[i] = !any(x)
+  bd2$fuzzy[i] = any(abs(difftime(s, bd2$Start[i], units = "hours")) < 48) 
+  bd2$shift[i] = min(abs(difftime(s, bd2$Start[i], units = "hours")))
+  
+}
+
+table(bd2$fuzzy, bd2$nomatch) # 2053 rows in bd2 where there's not a receiver in locs, 2798 where there is a receiver in locs2 but no matching timestamp
+
+# how many unique receivers in bd2 are represented by the matches?
+length(unique(bd2$Receiver[!bd2$nomatch]))
+
+# find the missing rows
+# nomatch = true & fuzzy = false
+
+missing_locs = bd2[bd2$nomatch & !bd2$fuzzy, ]
+
+# locs must be a subset of deps, where they didn't want to repeat location_name or lat/lon info
+# this means that we would not expect every receiver number to have a match in locs
+# and so we also wouldn't expect every receiver number + start to have a match in locs.
+
+
+# in bd2 there are 209 rows where the receiver matches one in locs2 and the corresponding start time is within 24hrs, so we're assuming the same
+
 
 # # Additional BARD (UCD 2016)
 # gis2016 = read.csv("~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Davis/8_12_2016_UCDMaintained_RT_Core.csv")
@@ -116,8 +156,8 @@ ydep$Origin = "YOLO 2020"
 ydep = ydep[!is.na(ydep$End), ]
 ydep = ydep[ydep$End != "", ]
 
-ydep$Start = lubridate::force_tz(ymd_hms(ydep$Start), tzone = "Etc/GMT+8")
-ydep$End = lubridate::force_tz(ymd_hms(ydep$End), tzone = "Etc/GMT+8")
+#ydep$Start = lubridate::force_tz(ymd_hms(ydep$Start), tzone = "Etc/GMT+8")
+#ydep$End = lubridate::force_tz(ymd_hms(ydep$End), tzone = "Etc/GMT+8")
 
 
 # SJR 2022
@@ -134,17 +174,15 @@ sjr$Start = paste(sjr$Start, "00:00:00")
 sjr$End = paste(sjr$End, "00:00:00")
 sjr$Origin = "SJR 2022"
 
-sjr$Start = lubridate::force_tz(ymd_hms(sjr$Start), "Etc/GMT+8")
-sjr$End = lubridate::force_tz(ymd_hms(sjr$End), "Etc/GMT+8")
+yolo_sjr = c(unique(ydep$Receiver), unique(sjr$Receiver))
+
+
+#sjr$Start = lubridate::force_tz(ymd_hms(sjr$Start), "Etc/GMT+8")
+#sjr$End = lubridate::force_tz(ymd_hms(sjr$End), "Etc/GMT+8")
 
 comp_tags(sjr$Location_name, lodi$Station) # sweet
 
-cols_keep = c("Location_name",
-              "Receiver",
-              "Start",
-              "End",
-              "Comments",
-              "Origin")
+
 
 # ------------------------------
 # Compare pag and bd, because all pag should be in bd
