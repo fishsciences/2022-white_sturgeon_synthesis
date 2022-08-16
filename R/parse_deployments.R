@@ -40,6 +40,41 @@ bd$Receiver = as.integer(bd$Receiver)
 ii = grep("YB", bd$Location_name)
 bd = bd[-ii, ]
 
+# load Yolo and Lodi
+# YOLO
+sql_loc = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/ac_telemetry_database.sqlite"
+con = dbConnect(RSQLite::SQLite(), sql_loc)
+ydep = dbGetQuery(con, "SELECT * FROM deployments;")
+dbDisconnect(con)
+
+ydep$Location_name = ydep$Station
+ydep$Comments = paste(ydep$VRLNotes, ydep$DeploymentNotes)
+
+ydep = dplyr::rename(ydep, Start = DeploymentStart,
+                     End = DeploymentEnd)
+
+ydep$Origin = "YOLO 2020"
+
+ydep = ydep[!is.na(ydep$End), ]
+ydep = ydep[ydep$End != "", ]
+
+# SJR 2022
+sjr = readxl::read_excel("~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Lodi/LFWO_SJR_WST_Receiver_Deployment_separatedByVRL.xlsx", sheet = "Lodi_deps_to_use")
+
+sjr = dplyr::select(sjr, 
+                    Location_name = Station,
+                    Receiver,
+                    Start = 'DeploymentStart',
+                    End = 'DeploymentEnd_vrlDate',
+                    Comments = Notes)
+
+sjr$Start = paste(sjr$Start, "00:00:00")
+sjr$End = paste(sjr$End, "00:00:00")
+sjr$Origin = "SJR 2022"
+
+yolo_sjr = c(unique(ydep$Receiver), unique(sjr$Receiver))
+
+# Isolate receivers on which we have detections
 rec_dets = unique(d2$Receiver)
 rec_bd = unique(bd$Receiver)
 rec_all = c(rec_bd, yolo_sjr)
@@ -116,14 +151,17 @@ missing_locs = bd2[bd2$nomatch & !bd2$fuzzy, ]
 # Exploring the deployment locations
 
 # Merge on location name, on the idea that they will uniquely ID a lat/long
-tmp = merge(bd, locs[c("Location_name", "Latitude", "Longitude", "Start", "End")],
+tmp = merge(bd2, locs[c("Location_name", "Latitude", "Longitude", "Start", "End")],
             by = "Location_name", all.x = TRUE)
 
 # seems to have matched most
 table(is.na(tmp$Latitude))
 
-# ~200 location names not matched
-sort(unique((tmp$Location_name[is.na(tmp$Latitude)])))
+# ~151 location names not matched
+x = sort(unique((tmp$Location_name[is.na(tmp$Latitude)])))
+sum(unique(x) %in% unique(locs$Location_name))
+# send .csv to UCD
+write.csv(tmp[is.na(tmp$Latitude), ] , "data/missing_locs.csv")
 
 # look for some of these
 grep("Tisdale", locs$Location_name, value = TRUE)
@@ -164,42 +202,6 @@ saveRDS(allgis, "data_clean/allgis.rds")
 ## 
 # Deployments tables from databases
 ## 
-# YOLO
-sql_loc = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/ac_telemetry_database.sqlite"
-con = dbConnect(RSQLite::SQLite(), sql_loc)
-ydep = dbGetQuery(con, "SELECT * FROM deployments;")
-dbDisconnect(con)
-
-ydep$Location_name = ydep$Station
-ydep$Comments = paste(ydep$VRLNotes, ydep$DeploymentNotes)
-
-ydep = dplyr::rename(ydep, Start = DeploymentStart,
-                     End = DeploymentEnd)
-
-ydep$Origin = "YOLO 2020"
-
-ydep = ydep[!is.na(ydep$End), ]
-ydep = ydep[ydep$End != "", ]
-
-#ydep$Start = lubridate::force_tz(ymd_hms(ydep$Start), tzone = "Etc/GMT+8")
-#ydep$End = lubridate::force_tz(ymd_hms(ydep$End), tzone = "Etc/GMT+8")
-
-
-# SJR 2022
-sjr = readxl::read_excel("~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Lodi/LFWO_SJR_WST_Receiver_Deployment_separatedByVRL.xlsx", sheet = "Lodi_deps_to_use")
-
-sjr = dplyr::select(sjr, 
-                    Location_name = Station,
-                    Receiver,
-                    Start = 'DeploymentStart',
-                    End = 'DeploymentEnd_vrlDate',
-                    Comments = Notes)
-
-sjr$Start = paste(sjr$Start, "00:00:00")
-sjr$End = paste(sjr$End, "00:00:00")
-sjr$Origin = "SJR 2022"
-
-yolo_sjr = c(unique(ydep$Receiver), unique(sjr$Receiver))
 
 
 #sjr$Start = lubridate::force_tz(ymd_hms(sjr$Start), "Etc/GMT+8")

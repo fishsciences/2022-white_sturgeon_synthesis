@@ -21,13 +21,14 @@ RPostgres::dbListTables(con)
 
 #x = dbGetQuery(con, "SELECT * FROM information_schema.tables;")
 
-x = dbGetQuery(con, "SELECT schema_name
+dbGetQuery(con, "SELECT schema_name
 FROM information_schema.schemata;")
 
 dbGetQuery(con, 'SELECT * FROM "UCD_69kHz_telemetry_data"."Detections_all" 
                  WHERE "Tag_ID" = 245 AND "Codespace" = \'A69-1206\' 
            LIMIT 20')
 
+if(FALSE){
 dets = dbGetQuery(con, 'SELECT * FROM "UCD_69kHz_telemetry_data"."Detections_all" 
                   WHERE "Tag_ID" IN (2841, 2842, 2843, 2844, 2845, 2846, 2847, 2848, 2849, 2850, 
 2851, 2852, 2853, 2854, 2855, 2856, 2857, 2858, 2859, 2860, 2861, 
@@ -67,7 +68,17 @@ dets = dbGetQuery(con, 'SELECT * FROM "UCD_69kHz_telemetry_data"."Detections_all
 63041, 63042, 63043, 63044, 63045, 63046, 63047, 63048, 63050, 
 63051, 63052, 63053, 63054, 63055, 63056, 63057)')
 
+
 saveRDS(dets, "data/allBARDdets_2022-06-03.rds")
+
+deps = dbGetQuery(con, 'SELECT * FROM "UCD_69kHz_telemetry_data"."Receiver_deployments"')
+str(deps)
+saveRDS(deps, "data/BARD_deployments_all_2022-06-24.rds")
+
+locs = dbGetQuery(con, 'SELECT * FROM "UCD_69kHz_telemetry_data"."Receiver_locations"')
+str(locs)
+saveRDS(locs, "data/BARD_Receiver_locations_2022-06-24.rds")
+}
 
 unique(dbGetQuery(con, "SELECT * FROM information_schema.tables;"))$table_name
 
