@@ -112,6 +112,31 @@ missing_locs = bd2[bd2$nomatch & !bd2$fuzzy, ]
 # colnames(gis2016) <- c("Longitude", "Latitude", "Location_name", "desc", "alt")
 # gis2016$Origin = "UCD 2016"
 
+#----------------------------------------#
+# Exploring the deployment locations
+
+# Merge on location name, on the idea that they will uniquely ID a lat/long
+tmp = merge(bd, locs[c("Location_name", "Latitude", "Longitude", "Start", "End")],
+            by = "Location_name", all.x = TRUE)
+
+# seems to have matched most
+table(is.na(tmp$Latitude))
+
+# ~200 location names not matched
+sort(unique((tmp$Location_name[is.na(tmp$Latitude)])))
+
+# look for some of these
+grep("Tisdale", locs$Location_name, value = TRUE)
+grep("Steamboat", locs$Location_name, value = TRUE)
+grep("Ben", locs$Location_name, value = TRUE) # Drop the _180 to match?
+grep("Chipps", locs$Location_name, value = TRUE) # this one not in locs
+grep("Rich", locs$Location_name, value = TRUE)
+grep("Tower", locs$Location_name, value = TRUE) 
+# Seems we need to clean up the location names in BD to get more matches
+# or locations are truly missing from the locs table
+
+
+
 # YOLO
 ylocs = readxl::read_excel("data/YoloLatLongs.xlsx")
 colnames(ylocs) = c("Location_name", "Location long", "Latitude", "Longitude")
