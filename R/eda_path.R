@@ -13,7 +13,7 @@ cols_keep = c("Location_name",
 
 # PATH deployments
 post12 = read.csv("~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Davis/deploys_post2012_final.csv")
-post12 = read.csv("Data/Davis/deploys_post2012_final.csv")
+#post12 = read.csv("Data/Davis/deploys_post2012_final.csv")
 post12$Origin = "PATH_post12"
 
 new = c(
@@ -29,7 +29,7 @@ i = match(new, colnames(post12))
 colnames(post12)[i] <- names(new)
 
 pre12 = read.csv("~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Davis/deploys_pre2012_excluding2012_FINAL.csv")
-pre12 = read.csv("Data/Davis/deploys_pre2012_excluding2012_FINAL.csv")
+#pre12 = read.csv("Data/Davis/deploys_pre2012_excluding2012_FINAL.csv")
 pre12$Origin = "PATH_pre12"
 
 new2 = c(
