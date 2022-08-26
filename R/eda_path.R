@@ -87,6 +87,9 @@ cc[order(cc$Start), ] # the deployment at Georg_SloughN3 on 2015-10-16 06:59:00 
 cc[cc$Start[-1] < cc$End[-nrow(cc)], ] 
 
 
+
+## Functionalizing
+
 # Isolate just the receivers that seem to be deployed in more than one place at the same time:
 
 # within a data frame: split by location_name, and check the overlaps across the intervals: do any of the intervals (start, end) from location A fall within location B...etc?
@@ -95,77 +98,16 @@ cc[cc$Start[-1] < cc$End[-nrow(cc)], ]
 
 library(data.table)
 
-z = split(bb, bb$Location_name) # two receiver dfs
-z = lapply(z, setDT)
-
-x = z[[1]]
-y = z[[2]]
-
-setkey(y, Start, End) # marks it as sorted with an attribute "sorted"; always sorted in ascending order. Reorders the DT by the columns provided and stores it that way
-
-res = data.table::foverlaps(x,
-                      y,
-                      type = "within",
-                      which = TRUE,
-                      nomatch = NULL)
-
-
-ans = list()
-#ans[[1]] = as.data.frame(rbind(x[res$xid[1], ], y[res$yid[1], ]))
-
-for(i in 1:nrow(res)) {
-  
-  ans[[i]] = as.data.frame(rbind(x[res$xid[i], ],
-                                 y[res$yid[i], ]))
-  
-}
-
-
-# Three locations:
-z = aa$`102242`
-z = split(z, z$Location_name)
-z = lapply(z, setDT)
-
-a = z[[1]]
-b = z[[2]]
-c = z[[3]]
-
-setkey(a, Start, End)
-setkey(b, Start, End)
-setkey(c, Start, End)
-
-# try with two locs:
-data.table::foverlaps(a,
-                      b,
-                            type = "within",
-                            which = TRUE,
-                            nomatch = NULL)
-
-res = mapply(
-  foverlaps,
-  x = list(b, b), # is it not working because foverlaps can't take lists as x&y? 
-  y = list(a, c),
-  MoreArgs = list(
-                type = "within",
-                which = TRUE,
-                nomatch = NULL),
-  SIMPLIFY = FALSE
-)
-
-res
-
-
-## Functionalizing
 table(sapply(aa, function(x) length(unique(x$Location_name)))) # some receivers have 4 or 5 locations that could potentially contain overlapping rows
 
-return_overlaps = function(z) { # all the deployments for a single receiver
-  
+# internal function that compares two locations of a single receiver:
+
+return_overlaps = function(z) { 
   
   if(length(z) != 2) stop("locations != 2")
     
     x = z[[1]]
     y = z[[2]]
-    
     setkey(y, Start, End)
     
     res = data.table::foverlaps(x,
@@ -173,8 +115,8 @@ return_overlaps = function(z) { # all the deployments for a single receiver
                                 type = "within",
                                 which = TRUE,
                                 nomatch = NULL)
-    if(nrow(res)) {
-    ans = list()
+    if(nrow(res)) { # if the resulting data.table has rows, then
+    ans = list() # initialize a list and populate
     for(i in seq(nrow(res))) {
 
       ans[[i]] = as.data.frame(rbind(x[res$xid[i], ],
@@ -184,13 +126,13 @@ return_overlaps = function(z) { # all the deployments for a single receiver
     
     } else {
       
-    ans = NULL }
+    ans = NULL } # if the resulting data.table has no rows, return NULL for that rec
     
-    return(ans)
+    return(ans) # otherwise return the ans list made in step 1
     
   }
   
-# Function that takes dfs with multiple receiver locations and makes them into pairs of locations to feed into return_overlaps:
+# wrapper function; takes a data.frame of all a receiver's deployments
 
 feeder = function(rec_df, split_col = "Location_name") {
 
@@ -198,14 +140,15 @@ feeder = function(rec_df, split_col = "Location_name") {
 
   if(length(z) < 2 ) return(FALSE) # if there is only 1 location, can't run foverlaps
 
-  if(length(z) == 2) ans = return_overlaps(z)
+  if(length(z) == 2) ans = return_overlaps(z) # if there's 2 locs, can just run the fxn
 
-  if(length(z) > 2) {
+  if(length(z) > 2) { # if there's more, we need to do some pairwise comps
  
   # create a matrix/array of pairwise indices
   idx = combn(length(z), 2, simplify = FALSE)
   ans = lapply(idx, function(i) return_overlaps(z[i]))
   ans = ans[!sapply(ans, is.null)] # only include the non-nulls
+  if(length(ans) == 0) ans = NULL # if all nulls, becomes list(); change that to a NULL for consistency with the rest
   }
   
   return(ans)
@@ -213,6 +156,27 @@ feeder = function(rec_df, split_col = "Location_name") {
 }
 
 test = aa$`102242`
-
 ans = feeder(test)
 ans
+
+test2 = aa$`106086`
+ans = feeder(test2)
+
+ans2 = lapply(aa, feeder)
+two_places = ans2[!sapply(ans2, is.null)]
+
+test3 = two_places[[1]]
+
+lapply(two_places, function(y)
+  lapply(seq_along(y), function(x) {
+    write.csv(y[[x]],
+              file = paste0("output/test/",
+                            unique(y[[x]]$Receiver), 
+                            "_conflict",
+                            x,
+                            ".csv"))
+  }))
+
+ll = aa$`121339`
+ll = ll[order(ll$Start), ]
+ll[ll$Start[-1] < ll$End[-nrow(ll)], ] # ordered by Start, we see that this receiver's deployment at Pt Reyes occurs before the end of its deployment at GG2.5
