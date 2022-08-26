@@ -13,7 +13,7 @@ cols_keep = c("Location_name",
 
 # PATH deployments
 post12 = read.csv("~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Davis/deploys_post2012_final.csv")
-
+post12 = read.csv("Data/Davis/deploys_post2012_final.csv")
 post12$Origin = "PATH_post12"
 
 new = c(
@@ -29,7 +29,7 @@ i = match(new, colnames(post12))
 colnames(post12)[i] <- names(new)
 
 pre12 = read.csv("~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Davis/deploys_pre2012_excluding2012_FINAL.csv")
-
+pre12 = read.csv("Data/Davis/deploys_pre2012_excluding2012_FINAL.csv")
 pre12$Origin = "PATH_pre12"
 
 new2 = c(
@@ -121,12 +121,17 @@ return_overlaps = function(z) {
 
       ans[[i]] = as.data.frame(rbind(x[res$xid[i], ],
                                      y[res$yid[i], ]))
+        
 
     }
-    
+    ans = do.call(rbind, ans)
     } else {
       
-    ans = NULL } # if the resulting data.table has no rows, return NULL for that rec
+        ans = x[0,]
+ 
+    } # if the resulting data.table has no rows, return empty df for that rec
+
+    
     
     return(ans) # otherwise return the ans list made in step 1
     
@@ -147,8 +152,10 @@ feeder = function(rec_df, split_col = "Location_name") {
   # create a matrix/array of pairwise indices
   idx = combn(length(z), 2, simplify = FALSE)
   ans = lapply(idx, function(i) return_overlaps(z[i]))
-  ans = ans[!sapply(ans, is.null)] # only include the non-nulls
-  if(length(ans) == 0) ans = NULL # if all nulls, becomes list(); change that to a NULL for consistency with the rest
+
+      ans = as.data.frame(rbindlist(ans, fill = TRUE))
+      #ans = ans[!sapply(ans, is.null)] # only include the non-nulls
+ # if(length(ans) == 0) ans = NULL # if all nulls, becomes list(); change that to a NULL for consistency with the rest
   }
   
   return(ans)
@@ -162,8 +169,15 @@ ans
 test2 = aa$`106086`
 ans = feeder(test2)
 
+test2 = aa$`102242`
+ans = feeder(test2)
+
+ans = feeder(test2)
+
 ans2 = lapply(aa, feeder)
-two_places = ans2[!sapply(ans2, is.null)]
+two_places = rbindlist(ans2, fill = TRUE)
+
+two_places$conflict = rep(seq(nrow(two_places)/2), each = 2)
 
 test3 = two_places[[1]]
 
