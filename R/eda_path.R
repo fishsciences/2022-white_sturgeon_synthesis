@@ -3,6 +3,7 @@
 # Tue Aug 23 13:10:28 2022 America/Los_Angeles ------------------------------
 
 base_dir = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/"
+base_dir = "."
 cols_keep = c("Location_name",
               "Receiver",
               "Latitude",
@@ -199,15 +200,65 @@ ll[ll$Start[-1] < ll$End[-nrow(ll)], ] # ordered by Start, we see that this rece
 test = aa$`102242`
 test = aa$`128`
 
-tt = data.frame(datetime = c(test$Start, test$End),
-                action = rep(c("Start", "End"), each = nrow(test)),
-                original_row = rep(seq(nrow(test)), times = 2),
-                loc = test$Location_name)
+get_overlaps = function(df,
+                        start_col = "Start",
+                        end_col = "End")
+{
+  tt = data.frame(datetime = c(df[[start_col]], df[[end_col]]),
+                  action = rep(c("Start", "End"), each = nrow(df)),
+                  row_id = rep(seq(nrow(df)), times = 2))
+  
+  tt$tmp = -1
+  tt$tmp[tt$action == "Start"] = 1
+  
+  tt = tt[order(tt$datetime),]
+  tt$rr = cumsum(tt$tmp)
+  ends = which(tt$rr == 0)
+  starts = c(1, ends[-length(ends)] + 1)
+  ans = mapply(function(a,b) tt[a:b,], starts, ends, SIMPLIFY = FALSE)
+  ans = ans[sapply(ans, nrow) > 2]
 
-tt$tmp = -1
-tt$tmp[tt$action == "Start"] = 1
+  lapply(ans, function(a) {
+    a[c("rr", "tmp")] = NULL
+    cbind(a, df[a$row_id, !colnames(df) %in% c(start_col, end_col)])
+    })
 
-tt = tt[order(tt$datetime),]
-tt$rr = cumsum(tt$tmp)
-                
+}
+
+
+t1 = get_overlaps(test)
+feeder(test) # no hits
+
+t1
+
+
+plot_overlaps = function(df)
+{
+  ggplot(df, aes(x = datetime, y =  row_id, color = Location_name)) +
+    geom_point() +
+    theme_bw() +
+    labs(title = sprintf("Receiver %s", unique(df$Receiver)))
+}
+
+ans = lapply(aa, get_overlaps)
+
+
+ww = unlist(ans, recursive = FALSE)
+
+plot_overlaps(ww[[3]])
+
+out_dir = "output/overlapping_path_deployments"
+
+if(!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+
+sapply(names(ww), function(nm) write.csv(ww[[nm]], file = file.path(out_dir,
+                                                                    sprintf("overlap_%s.csv", nm)),
+                                         row.names = FALSE))
+
+sapply(names(ww), function(nm) {
+  plot_overlaps(ww[[nm]])
+  ggsave(filename = file.path(out_dir,
+                              sprintf("overlap_%s.png", nm)),
+         bg = "white")
+  })
 
