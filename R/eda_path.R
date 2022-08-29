@@ -2,7 +2,7 @@
 # M. Johnston
 # Tue Aug 23 13:10:28 2022 America/Los_Angeles ------------------------------
 
-
+base_dir = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/"
 cols_keep = c("Location_name",
               "Receiver",
               "Latitude",
@@ -12,8 +12,8 @@ cols_keep = c("Location_name",
               "Origin")
 
 # PATH deployments
-post12 = read.csv("~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Davis/deploys_post2012_final.csv")
-#post12 = read.csv("Data/Davis/deploys_post2012_final.csv")
+post12 = read.csv(file.path(base_dir, "Data/Davis/deploys_post2012_final.csv"))
+
 post12$Origin = "PATH_post12"
 
 new = c(
@@ -28,8 +28,7 @@ new = c(
 i = match(new, colnames(post12))
 colnames(post12)[i] <- names(new)
 
-pre12 = read.csv("~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Davis/deploys_pre2012_excluding2012_FINAL.csv")
-#pre12 = read.csv("Data/Davis/deploys_pre2012_excluding2012_FINAL.csv")
+pre12 = read.csv(file.path(base_dir, "Data/Davis/deploys_pre2012_excluding2012_FINAL.csv"))
 pre12$Origin = "PATH_pre12"
 
 new2 = c(
@@ -194,3 +193,21 @@ lapply(two_places, function(y)
 ll = aa$`121339`
 ll = ll[order(ll$Start), ]
 ll[ll$Start[-1] < ll$End[-nrow(ll)], ] # ordered by Start, we see that this receiver's deployment at Pt Reyes occurs before the end of its deployment at GG2.5
+
+
+#----------------------------------------#
+test = aa$`102242`
+test = aa$`128`
+
+tt = data.frame(datetime = c(test$Start, test$End),
+                action = rep(c("Start", "End"), each = nrow(test)),
+                original_row = rep(seq(nrow(test)), times = 2),
+                loc = test$Location_name)
+
+tt$tmp = -1
+tt$tmp[tt$action == "Start"] = 1
+
+tt = tt[order(tt$datetime),]
+tt$rr = cumsum(tt$tmp)
+                
+
