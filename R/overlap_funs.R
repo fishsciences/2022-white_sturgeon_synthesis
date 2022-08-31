@@ -92,3 +92,10 @@ get_overlaps = function(df,
 
 }
 
+plot_overlaps = function(df, group_col = "Location_name", receiver_col = "Receiver")
+{
+  ggplot(df, aes(x = datetime, y =  row_id, color = .data[[group_col]])) +
+    geom_point() +
+    theme_bw() +
+    labs(title = sprintf("Receiver %s", unique(df[[receiver_col]])))
+}

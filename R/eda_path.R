@@ -140,15 +140,6 @@ feeder(test) # no hits
 
 t1
 
-
-plot_overlaps = function(df)
-{
-  ggplot(df, aes(x = datetime, y =  row_id, color = Location_name)) +
-    geom_point() +
-    theme_bw() +
-    labs(title = sprintf("Receiver %s", unique(df$Receiver)))
-}
-
 ans = lapply(aa, get_overlaps)
 
 
