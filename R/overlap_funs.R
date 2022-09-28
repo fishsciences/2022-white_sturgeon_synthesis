@@ -72,16 +72,18 @@ get_overlaps = function(df,
                         end_col = "End")
 {
   tt = data.frame(datetime = c(df[[start_col]], df[[end_col]]),
-                  action = factor(rep(2:1, each = nrow(df)), labels = c("End", "Start")), # for tie splitting
+                  action = factor(rep(2:1, each = nrow(df)), 
+                                  labels = c("End", "Start")), # for tie splitting
                   row_id = rep(seq(nrow(df)), times = 2))
   
+  # set tmp column to -1 or 1 conditional on what's in the "action" col
   tt$tmp = -1
   tt$tmp[tt$action == "Start"] = 1
   
-  tt = tt[order(tt$datetime, tt$action),]
-  tt$rr = cumsum(tt$tmp)
+  tt = tt[order(tt$datetime, tt$action), ] # second column is to break ties without changing original datetime vals
+  tt$rr = cumsum(tt$tmp) 
   ends = which(tt$rr == 0)
-  starts = c(1, ends[-length(ends)] + 1)
+  starts = c(1, ends[-length(ends)] + 1) # has to be a start at index 1; rest are one offset from the end (the rest are the next value after each end).
   ans = mapply(function(a,b) tt[a:b,], starts, ends, SIMPLIFY = FALSE)
   ans = ans[sapply(ans, nrow) > 2]
 

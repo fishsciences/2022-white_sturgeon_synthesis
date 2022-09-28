@@ -44,6 +44,10 @@ i = match(new, colnames(path))
 colnames(path)[i] <- names(new)
 attr(path$Start, "tz")
 
+# convert to PT because that's what the others are in:
+path$Start = with_tz(path$Start, tzone = "Etc/GMT+8")
+path$End = with_tz(path$End, tzone = "Etc/GMT+8")
+
 # remove overlapping Yolo deployments, source from ybt data later
 ii = grep("YB", path$Location_name)
 path = path[-ii, ]
@@ -137,6 +141,10 @@ summary(alldeps$Longitude)
 # correct the positive longs
 alldeps$Longitude[alldeps$Longitude > 0] <- alldeps$Longitude[alldeps$Longitude > 0]*(-1)
 stopifnot(alldeps$Longitude < 0)
+
+# add column of PST
+alldeps$StartUTC = with_tz(alldeps$Start, tzone = "UTC")
+alldeps$EndUTC = with_tz(alldeps$End, tzone = "UTC")
 
 saveRDS(alldeps, "data_clean/alldeps.rds")
 
