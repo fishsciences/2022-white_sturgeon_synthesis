@@ -73,6 +73,7 @@ sapply(names(gg), function(nm) {
 # Other checks: # start with g2
 library(lubridate)
 # Date / Time checks
+g2 = g[!is.na(g$Stop) & !is.na(g$Lat), ]
 range(g2$Start)
 range(g2$Stop)
 
@@ -97,10 +98,11 @@ stopifnot(min(test$Lat) == max(test$Lat))
 chk_coords = function(df) {
   
   # within a data frame of deployments for a single receiver, compare lats with lats, lons with lons
-  diff_lat = max(df$Lat) - min(df$Lat)
-  diff_lon = max(df$Lon) - min(df$Lon)
+  diff_lat = diff(range(df$Lat))
+  diff_lon = diff(range(df$Lat))
   
-  if(abs(diff_lat) >= 0.001 | abs(diff_lon) >= 0.001) return(unique(df$Location))
+  if(abs(diff_lat) >= 0.001 | abs(diff_lon) >= 0.001) 
+    {return(unique(df$Location))} else {return(invisible())}
   
 }
 
@@ -110,7 +112,13 @@ test$Lat[1] <- 40
 
 chk_coords(test)
 
+# check that all longs are negative:
+stopifnot(g2$Lon < 0)
 
 g_split = split(g2, g2$Location)
 
-ans = lapply(g_split, FUN = chk_coords)
+sapply(g_split, FUN = chk_coords)
+
+ans[!sapply(ans, is.null)] # all null
+
+saveRDS(g2, "data/bard_depsQ42022.rds")
