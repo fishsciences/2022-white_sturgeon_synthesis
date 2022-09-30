@@ -1,6 +1,6 @@
 # QAQC Detections
 # M. Johnston
-# Fri Jul  1 10:28:13 2022 ------------------------------
+# Fri Sep 30 10:33:48 2022 America/Los_Angeles ------------------------------
 
 library(ybt)
 library(RSQLite)
@@ -22,7 +22,7 @@ dets = dbGetQuery(con, "SELECT * FROM detections")
 
 dd = subset(dets, TagID %in% alltags$TagCode)
 
-dd$DateTimeUTC = as.POSIXct(dd$DateTimeUTC)
+dd$DateTimeUTC = as.POSIXct(dd$DateTimeUTC, tz = "UTC")
 
 d2 = dd[dd$DateTimeUTC > ymd_hms("2010-08-17 00:00:00"), ] # study start
 d2 = tidyr::separate(d2, col = Receiver, sep = "-", into = c("Freq", "Receiver"))
@@ -35,12 +35,16 @@ saveRDS(d2, "data/WST_detections.rds")
 
 d = readRDS("data/WST_detections.rds") # has already been subset down to only our tags and date range
 tags = readRDS("data_clean/alltags.rds")
+table(tags$StudyID)
+tags[tags$StudyID == "SAC WST", ]
 
+chk = d[d$TagID == "A69-1303-47826", ]
+chk = grep(47824, d$TagID, value = TRUE)
 
-d = dplyr::left_join(d, tags[ , c("TagID", "Study_ID")])
+dd = merge(d, tags[ , c("TagCode", "StudyID")], by.x = "TagID", by.y = "TagCode")
+table(dd$StudyID)
 
-# bring in study id
-tapply(d$Receiver, d$Study_ID, function(x) length(unique(x)))
+tapply(d$Receiver, d$StudyID, function(x) length(unique(x)))
 len(d$Receiver)
 d$Year = year(d$DateTimeUTC)
 tapply(d$Receiver, d$Year, function(x) length(unique(x)))
