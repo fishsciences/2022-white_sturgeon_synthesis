@@ -1,6 +1,7 @@
 # Combining tag tables to prep for UCD BARD query
 # M. Johnston
-# Wed Apr 20 13:48:56 2022 ------------------------------
+# Fri Sep 30 10:27:40 2022 America/Los_Angeles ------------------------------
+
 source('R/utils.R') # sources data-dir script to set dropbox path
 # columns needed:
 #Tag_ID, DateTagged, Codespace, Freq_kHz, Tagging/Release_location, StudyID, 
@@ -89,9 +90,9 @@ m = dplyr::rename(m,
 m$DateTagged = as.Date(m$Date, format = "%m/%d/%y")
 
 m$Freq_kHz = "A69"
+m$CodeSpace = 1303L
 m$TagCode = paste(m$Freq_kHz, m$CodeSpace, m$TagID, sep = "-")
 m$StudyID = "SAC WST"
-m$CodeSpace = 1303L
 
 m$TagEnd = as.POSIXct((m$DateTagged + 3650), format = "%Y-%m-%d")
 
