@@ -1,3 +1,7 @@
+# This script adds the entire BARD detections table (queried May 2022) to the Yolo Detections from 2012-2018
+# M. Johnston
+# Fri Jul  1 09:38:24 2022 ------------------------------
+
 library(ybt)
 library(RSQLite)
 library(data.table)

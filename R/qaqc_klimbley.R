@@ -2,6 +2,7 @@
 # M. Espe
 # 2022 Aug
 library(ggplot2)
+library(lubridate)
 source("R/overlap_funs.R")
 data.dir = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/"
 
@@ -39,7 +40,6 @@ sapply(names(gg), function(nm) {
 
 #---------------------
 # Other checks: # start with g2
-library(lubridate)
 # Date / Time checks
 g2 = g[!is.na(g$Stop) & !is.na(g$Lat), ]
 range(g2$Start)
@@ -49,7 +49,7 @@ range(g2$Stop)
 ss = c(with_tz(g2$Stop, "Etc/GMT+8"), with_tz(g2$Start, "Etc/GMT+8"))
 summary(hour(ss))
 after_hours = ss[hour(ss) >= 22 | hour(ss) <= 5]
-after_hours # ~260 start times fall within these ranges
+after_hours # ~260 start/stop times fall within these ranges
 range(after_hours) # possible that some times were actually in PT already but were "converted" to UTC
 
 # do any deployments end before they begin?
@@ -89,4 +89,4 @@ sapply(g_split, FUN = chk_coords)
 
 ans[!sapply(ans, is.null)] # all null
 
-saveRDS(g2, "data/bard_depsQ42022.rds")
+#saveRDS(g2, "data/bard_depsQ42022.rds")
