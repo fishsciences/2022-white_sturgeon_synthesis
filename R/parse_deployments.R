@@ -163,9 +163,12 @@ alldeps = dplyr::bind_rows(ydep[ , cols_keep],
                            path[ , cols_keep],
                            sjr[ , cols_keep])
 
-sort(unique(alldeps$Receiver))
+# check
+summary(unique(alldeps$Receiver))
 summary(alldeps$Latitude)
 summary(alldeps$Longitude)
+chk = alldeps[alldeps$End <= alldeps$Start, ]
+
 
 # correct the positive longs
 alldeps$Longitude[alldeps$Longitude > 0] <- alldeps$Longitude[alldeps$Longitude > 0]*(-1)
@@ -174,6 +177,8 @@ stopifnot(alldeps$Longitude < 0)
 # add column of PST
 alldeps$StartUTC = with_tz(alldeps$Start, tzone = "UTC")
 alldeps$EndUTC = with_tz(alldeps$End, tzone = "UTC")
+
+
 
 saveRDS(alldeps, "data_clean/alldeps.rds")
 
