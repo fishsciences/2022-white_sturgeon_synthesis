@@ -23,7 +23,8 @@ cols_keep = c("Location_name",
               "End",
               "Latitude", 
               "Longitude",
-              "Origin")
+              "Origin",
+              "Notes")
 
 # Detections
 # Compare the receivers our fish were actually detected on to our deployments data
@@ -39,7 +40,8 @@ new = c(
   "Receiver" = "VR2SN",
   "Latitude" = "Lat",
   "Longitude" = "Lon",
-  "End" = "Stop"
+  "End" = "Stop",
+  "Notes" = "Additional_Notes"
 )
 
 i = match(new, colnames(path))
@@ -62,9 +64,10 @@ ydep = dbGetQuery(con, "SELECT * FROM deployments;")
 dbDisconnect(con)
 
 ydep$Location_name = ydep$Station
-ydep$Comments = paste(ydep$VRLNotes, ydep$DeploymentNotes)
+ydep$Notes = paste(ydep$VRLNotes, ydep$DeploymentNotes)
 
-ydep = dplyr::rename(ydep, Start = DeploymentStart,
+ydep = dplyr::rename(ydep, 
+                     Start = DeploymentStart,
                      End = DeploymentEnd)
 
 ydep$Origin = "YOLO 2020"
@@ -84,7 +87,7 @@ sjr = dplyr::select(sjr,
                     Receiver,
                     Start = 'DeploymentStart',
                     End = 'DeploymentEnd_vrlDate',
-                    Comments = Notes)
+                    Notes)
 
 sjr$Start = paste(sjr$Start, "00:00:00")
 sjr$End = paste(sjr$End, "23:59:59") # rounding up deployment end to include the full day that it ends on
@@ -143,7 +146,6 @@ path <- rbind(path, ins)
 rec_all = unique(c(unique(path$Receiver), yolo_sjr))
 stopifnot(all(rec_dets %in% rec_all)) # should pass now
 
-
 # YOLO
 ylocs = readxl::read_excel("data/YoloLatLongs.xlsx")
 colnames(ylocs) = c("Location_name", "Location long", "Latitude", "Longitude")
@@ -163,11 +165,25 @@ alldeps = dplyr::bind_rows(ydep[ , cols_keep],
                            path[ , cols_keep],
                            sjr[ , cols_keep])
 
+# insert missing deployment for Santa Clara Shoals 1N rec, per Matt Pagel email circa 2013:
+scs = alldeps[alldeps$Receiver == 101256, ][2:3, ]
+stopifnot(scs$Start[2] == structure(1361529669, class = c("POSIXct", "POSIXt"), tzone = "Etc/GMT+8"))
+stopifnot(scs$End[1] == structure(1353348906, class = c("POSIXct", "POSIXt"), tzone = "Etc/GMT+8"))
+scs_ins = scs[1, ]
+scs_ins$Start <- scs$End[1] + 1 # add 1 second
+scs_ins$End <- scs$Start[2] - 1 # subtract 1 from the next start
+scs_ins$Origin = "BARD 2020"
+scs_ins$Notes = "this row added in parse_deployments.R, Dec 2022"
+
+alldeps = rbind(alldeps, scs_ins)
+
+alldeps = alldeps[order(alldeps$Receiver, alldeps$Start), ]
+
 # check
 summary(unique(alldeps$Receiver))
 summary(alldeps$Latitude)
 summary(alldeps$Longitude)
-chk = alldeps[alldeps$End <= alldeps$Start, ]
+chk = alldeps[alldeps$End < alldeps$Start, ]
 
 
 # correct the positive longs
