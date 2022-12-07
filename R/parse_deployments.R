@@ -75,11 +75,12 @@ ydep$Origin = "YOLO 2020"
 ydep = ydep[!is.na(ydep$End), ]
 ydep = ydep[ydep$End != "", ] # be aware that this cuts the deployments back to Dec 2019
 
-ydep$Start = as.POSIXct(ydep$Start, tz = "Etc/GMT+8")
-ydep$End = as.POSIXct(ydep$End, tz = "Etc/GMT+8")
+ydep$Start = as.POSIXct(ydep$Start, tz = "Etc/GMT+8", format = "%Y-%m-%d %H:%M:%S")
+ydep$End = as.POSIXct(ydep$End, tz = "Etc/GMT+8", format = "%Y-%m-%d %H:%M:%S")
 
 # SJR 2022
-sjr = readxl::read_excel(file.path(data.dir, "Lodi/LFWO_SJR_WST_Receiver_Deployment_separatedByVRL.xlsx"), 
+sjr = readxl::read_excel(file.path(data.dir, 
+                                   "Lodi/LFWO_SJR_WST_Receiver_Deployment_separatedByVRL.xlsx"), 
                          sheet = "Lodi_deps_to_use")
 
 sjr = dplyr::select(sjr, 
@@ -89,11 +90,11 @@ sjr = dplyr::select(sjr,
                     End = 'DeploymentEnd_vrlDate',
                     Notes)
 
-sjr$Start = paste(sjr$Start, "00:00:00")
+sjr$Start = paste(sjr$Start, "00:00:01")
 sjr$End = paste(sjr$End, "23:59:59") # rounding up deployment end to include the full day that it ends on
 
-sjr$Start = as.POSIXct(sjr$Start, tz = "Etc/GMT+8")
-sjr$End = as.POSIXct(sjr$End, tz = "Etc/GMT+8")
+sjr$Start = as.POSIXct(sjr$Start, tz = "Etc/GMT+8", format = "%Y-%m-%d %H:%M:%S")
+sjr$End = as.POSIXct(sjr$End, tz = "Etc/GMT+8", format = "%Y-%m-%d %H:%M:%S")
 sjr$Origin = "SJR 2022"
 
 # end_times = readxl::read_excel(file.path(data.dir, "Lodi/OneDrive_1_6-13-2022/Full Receiver History_Updated Jun2017.xlsx"), sheet = 1)
@@ -151,19 +152,31 @@ ylocs = readxl::read_excel("data/YoloLatLongs.xlsx")
 colnames(ylocs) = c("Location_name", "Location long", "Latitude", "Longitude")
 ylocs$Origin = "YOLO 2020"
 
+sum(duplicated(ydep[ , c("Location_name", "Receiver", "Start")]))
 ydep = merge(ydep,  ylocs[ , c("Location_name", "Longitude", "Latitude")], all.x = TRUE)
 
+ydep$End[is.na(ydep$End)] <- as.POSIXct("2019-08-21 11:05:00", tz = "Etc/GMT+8")
 
 # LODI
 lodi = readxl::read_excel("~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Lodi/LFWO_SJR_WST_Receiver_Deployment.xlsx")
 
+# need to take it down to 4 decimals; verify that there's only 1 lat/long per location_name
+
 lodi = dplyr::rename(lodi, Location_name = Station)
-sjr = merge(sjr, lodi[ , c("Location_name", "Longitude", "Latitude")], all.x = TRUE)
+lodi = as.data.frame(lodi[ , c("Location_name", "Longitude", "Latitude")])
+stopifnot(all(sjr$Location_name %in% lodi$Location_name))
+lodi[ , c("Longitude", "Latitude")] <- round(lodi[ , c("Longitude", "Latitude")], 3)
+
+j = duplicated(lodi$Location_name)
+lodi = lodi[!j, ]
+
+sjr = merge(sjr, lodi, all.x = TRUE)
+sjr$Receiver = as.integer(sjr$Receiver)
 
 # represents all the deployment data we have that includes start and end dates
-alldeps = dplyr::bind_rows(ydep[ , cols_keep],
-                           path[ , cols_keep],
-                           sjr[ , cols_keep])
+alldeps = rbind(ydep[ , cols_keep],
+                path[ , cols_keep],
+                sjr[ , cols_keep])
 
 # insert missing deployment for Santa Clara Shoals 1N rec, per Matt Pagel email circa 2013:
 scs = alldeps[alldeps$Receiver == 101256, ][2:3, ]
@@ -183,8 +196,9 @@ alldeps = alldeps[order(alldeps$Receiver, alldeps$Start), ]
 summary(unique(alldeps$Receiver))
 summary(alldeps$Latitude)
 summary(alldeps$Longitude)
-chk = alldeps[alldeps$End < alldeps$Start, ]
-
+colSums(is.na(alldeps))
+alldeps[alldeps$End < alldeps$Start, ]
+range(alldeps$Start)
 
 # correct the positive longs
 alldeps$Longitude[alldeps$Longitude > 0] <- alldeps$Longitude[alldeps$Longitude > 0]*(-1)
