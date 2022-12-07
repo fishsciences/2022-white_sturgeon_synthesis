@@ -143,6 +143,12 @@ ins$Receiver = as.integer(ins$Receiver)
 str(path[, cols_keep])
 path <- rbind(path, ins)
 
+# Extend final window of rec deployment per notes column and detections of A69-9001-27460:
+i = path$Receiver == 112537 & path$End == as.POSIXct("2015-06-17 12:00:00", tz = "Etc/GMT+8")
+i_corr = as.POSIXct("2015-06-23 01:00:00", tz = "Etc/GMT+8")
+path$End[i] <- i_corr
+path[path$Receiver == 112537, ]  # fixed
+
 # test merge results:
 rec_all = unique(c(unique(path$Receiver), yolo_sjr))
 stopifnot(all(rec_dets %in% rec_all)) # should pass now
@@ -208,8 +214,10 @@ stopifnot(alldeps$Longitude < 0)
 alldeps$StartUTC = with_tz(alldeps$Start, tzone = "UTC")
 alldeps$EndUTC = with_tz(alldeps$End, tzone = "UTC")
 
-
-
+# only have deployments that end >= June 2010:
+outside = alldeps$End < as.POSIXct("2010-05-30 23:23:23", tz = "Etc/GMT+8")
+chk = alldeps[outside, ]
+alldeps = alldeps[!outside, ]
 saveRDS(alldeps, "data_clean/alldeps.rds")
 
 # bounds
