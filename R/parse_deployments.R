@@ -8,6 +8,14 @@ library(telemetry)
 library(lubridate)
 source("R/overlap_funs.R")
 data.dir = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/"
+if(FALSE){
+  # YOLO deployments original
+  sql_loc = file.path(data.dir, "ac_telemetry_database.sqlite") # yolo + BARD
+  con = dbConnect(RSQLite::SQLite(), sql_loc)
+  ydep = dbGetQuery(con, "SELECT * FROM deployments;")
+  dbDisconnect(con)
+  saveRDS(ydep, "data/ydep.rds")
+}
 
 ## Receiver bounds: Longitude -120.0, Latitude 37.2
 ## Detection bounds: "2010-08-17" - "2022-01-01"
@@ -56,13 +64,13 @@ path$End = with_tz(path$End, tzone = "Etc/GMT+8")
 ii = grep("YB", path$Location_name)
 path = path[-ii, ]
 
-# load Yolo and Lodi
-# YOLO
-sql_loc = file.path(data.dir, "ac_telemetry_database.sqlite")
-con = dbConnect(RSQLite::SQLite(), sql_loc)
-ydep = dbGetQuery(con, "SELECT * FROM deployments;")
-dbDisconnect(con)
+# only have deployments that end >= June 2010:
+outside = path$End < as.POSIXct("2010-05-30 23:23:23", tz = "Etc/GMT+8")
+chk = path[outside, ]
+path = path[!outside, ]
 
+# load Yolo and Lodi
+ydep = readRDS("data/ydep.rds")
 ydep$Location_name = ydep$Station
 ydep$Notes = paste(ydep$VRLNotes, ydep$DeploymentNotes)
 
@@ -71,9 +79,7 @@ ydep = dplyr::rename(ydep,
                      End = DeploymentEnd)
 
 ydep$Origin = "YOLO 2020"
-
-ydep = ydep[!is.na(ydep$End), ]
-ydep = ydep[ydep$End != "", ] # be aware that this cuts the deployments back to Dec 2019
+ydep = ydep[ydep$End != "", ]
 
 ydep$Start = as.POSIXct(ydep$Start, tz = "Etc/GMT+8", format = "%Y-%m-%d %H:%M:%S")
 ydep$End = as.POSIXct(ydep$End, tz = "Etc/GMT+8", format = "%Y-%m-%d %H:%M:%S")
@@ -81,21 +87,21 @@ ydep$End = as.POSIXct(ydep$End, tz = "Etc/GMT+8", format = "%Y-%m-%d %H:%M:%S")
 # SJR 2022
 sjr = readxl::read_excel(file.path(data.dir, 
                                    "Lodi/LFWO_SJR_WST_Receiver_Deployment_separatedByVRL.xlsx"), 
-                         sheet = "Lodi_deps_to_use")
+                         sheet = "Deployment")
 
 sjr = dplyr::select(sjr, 
                     Location_name = Station,
                     Receiver,
                     Start = 'DeploymentStart',
-                    End = 'DeploymentEnd_vrlDate',
-                    Notes)
+                    End = 'DeploymentEnd',
+                    Notes = Comment)
 
-sjr$Start = paste(sjr$Start, "00:00:01")
-sjr$End = paste(sjr$End, "23:59:59") # rounding up deployment end to include the full day that it ends on
-
-sjr$Start = as.POSIXct(sjr$Start, tz = "Etc/GMT+8", format = "%Y-%m-%d %H:%M:%S")
-sjr$End = as.POSIXct(sjr$End, tz = "Etc/GMT+8", format = "%Y-%m-%d %H:%M:%S")
 sjr$Origin = "SJR 2022"
+
+# duplicate deployments in sjr & PATH: need to remove from PATH
+comp = path[path$Receiver %in% unique(sjr$Receiver), ] # checked these w/ Laura on 12/22; can discard PATH dups
+range(comp$End)
+path = dplyr::anti_join(path, comp)
 
 # end_times = readxl::read_excel(file.path(data.dir, "Lodi/OneDrive_1_6-13-2022/Full Receiver History_Updated Jun2017.xlsx"), sheet = 1)
 # 
