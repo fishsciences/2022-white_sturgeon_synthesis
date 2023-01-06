@@ -226,7 +226,13 @@ chk = alldeps[outside, ]
 alldeps = alldeps[!outside, ]
 saveRDS(alldeps, "data_clean/alldeps.rds")
 
-# bounds
-allgis = subset(alldeps, Longitude > -122.0 & Longitude < -120.0 & Latitude > 37.1 & Latitude < 44)
 
-saveRDS(allgis, "data_clean/allgis.rds")
+
+if(FALSE){
+  deps = readRDS("data_clean/alldeps.rds")
+  # bounds
+  allgis = subset(deps, Longitude > -122.65 & Longitude < -120.0 & Latitude > 37.1 & Latitude < 44)
+  saveRDS(allgis, "data_clean/allgis.rds")
+  write.csv(deps, "data_clean/alldeps.csv")
+  
+}

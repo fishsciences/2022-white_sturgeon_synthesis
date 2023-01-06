@@ -107,4 +107,13 @@ all.tags = dplyr::bind_rows(d, y2, m)
 csn(all.tags)
 range(all.tags$DateTagged)
 
+sort(unique(all.tags$Sex))
+
+all.tags$Sex[all.tags$Sex == "AF"] <- "F"
+all.tags$Sex[all.tags$Sex == "f"] <- "F"
+all.tags$Sex[all.tags$Sex %in% c("u", "U ", "U (male?)")] <- "U"
+
+table(all.tags$Sex)
+
 saveRDS(all.tags, "data_clean/alltags.rds")
+write.csv(all.tags, "data_clean/alltags.csv")
