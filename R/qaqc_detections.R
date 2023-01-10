@@ -68,6 +68,7 @@ mults = idx$xid %in% names(b) # logical index of multiples; sum should now be ze
 good = single[!mults & ! orphan_idx, ]
 
 # these are all the detections that fall within a legit receiver window, no fuzzy match necessary
+saveRDS(good, "data_clean/alldets.rds")
 write.csv(good[ , c("DateTimePST", "TagID", "Receiver", "Location_name", "Latitude", "Longitude", "Origin")], "data_clean/detections_clean2023-01-04.csv")
 
 # create df of orphans:

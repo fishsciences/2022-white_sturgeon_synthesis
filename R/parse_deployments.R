@@ -231,8 +231,7 @@ saveRDS(alldeps, "data_clean/alldeps.rds")
 if(FALSE){
   deps = readRDS("data_clean/alldeps.rds")
   # bounds
-  allgis = subset(deps, Longitude > -122.65 & Longitude < -120.0 & Latitude > 37.1 & Latitude < 44)
-  saveRDS(allgis, "data_clean/allgis.rds")
+  # allgis = subset(deps, Longitude > -122.65 & Longitude < -120.0 & Latitude > 37.1 & Latitude < 44) # cuts out the Pt_Reyes receivers, but we don't need to
   write.csv(deps, "data_clean/alldeps.csv")
   
 }
