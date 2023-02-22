@@ -20,9 +20,29 @@ table(pnts$Basin)
 
 pnts = as.data.frame(pnts)
 sort(unique(pnts$Location_name[pnts$Basin == "Bay"]))
-
-unique(dets$Longitude[dets$Location_name == "SR_BlwDeerCk"])
 sort(unique(pnts$Location_name[pnts$Basin == "Sacramento River"]))
+sort(unique(pnts$Location_name[pnts$Basin == "SJR Basin"]))
 
 v = table(pnts$Location_name)
 v[v>1]
+
+gis[gis$Location_name == "SJR LR", ]
+gis[gis$Location_name == "SJR UR", ]
+
+# add basin to deployments
+deps = readRDS("data_clean/alldeps.rds")
+deps$combo = paste0(deps$Latitude, deps$Longitude)
+
+
+ans = merge(deps, pnts[ , c("Location_name", "combo", "Basin")],
+            all.x = TRUE, by = c("Location_name", "combo"))
+
+write.csv(ans, "data_clean/alldeps_with_basin.csv", row.names = FALSE)
+
+# add basin to detections
+d = readRDS("data_clean/alldets.rds")
+d = d[ , c("Receiver", "Location_name", "TagID", "DateTimePST", "Origin")]
+ans = read.csv("data_clean/alldeps_with_basin.csv")
+
+ans2 = merge(d, ans[ , c("Location_name", "Receiver", "Basin")],
+             all.x = TRUE)
