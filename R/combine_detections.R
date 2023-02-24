@@ -12,7 +12,7 @@ names(bard); names(ydets)
 # Check tz; Format bard same as detection table in Yolo detections
 tz(bard$Detect_date_time)  
 bard$DateTimeUTC = as.character(bard$Detect_date_time)
-bard$Receiver = bard$Receiver_ser_num
+bard$Receiver = paste("VR2W", as.character(bard$Receiver_ser_num), sep = "-")
 bard$TagID = paste(bard$Codespace, bard$Tag_ID, sep = "-")
 bard[,c("TagName", "TagSN")] = NA
 bard$SensorValue = bard$Data
@@ -72,6 +72,18 @@ stopifnot(nrow(ltmp) - nrow(sjr) == sum(i))
 
 all_dets = rbind(bard_tmp, sjr)
 all_dets$DateTimeUTC = as.POSIXct(all_dets$DateTimeUTC, tz = "UTC")
-all_dets = all_dets[all_dets$DateTimeUTC > ymd_hms("2010-08-17 00:00:00", tz = "UTC"), ] # study start
-range(all_dets$DateTimeUTC)
-saveRDS(all_dets, "data/combined_detections.rds")
+all_dets = all_dets[all_dets$DateTimeUTC > ymd_hms("2010-08-17 00:00:00", tz = "UTC"), ] # study
+
+# subset detections down to just our study fish
+tags = readRDS("data_clean/alltags.rds")
+
+dd = subset(all_dets, TagID %in% tags$TagCode)
+dd = tidyr::separate(dd, col = Receiver, sep = "-", into = c("Freq", "Receiver"))
+dd$Receiver = as.integer(dd$Receiver)
+dd = dd[ , c("TagID", "DateTimeUTC", "Receiver", "DetOrigin")]
+
+dd = merge(dd, tags[ , c("TagCode", "StudyID")], by.x = "TagID", by.y = "TagCode") # slow; better to summarise/table by TagCode first, and then join that smaller table
+
+dd$DateTimePST = with_tz(dd$DateTimeUTC, tz = "Etc/GMT+8")
+
+saveRDS(dd, "data/WST_detections.rds")

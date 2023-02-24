@@ -1,42 +1,10 @@
 # QAQC Detections
 # M. Johnston
-# Tue Dec  6 13:26:47 2022 America/Los_Angeles ------------------------------
 library(data.table)
 library(lubridate)
 library(ggplot2)
 library(telemetry)
 source("R/utils.R")
-
-# tidies the detections - only run again if data has changed
-if(FALSE){
-  library(RSQLite)
-source("R/collate_tags.R")
-
-tags = readRDS("data_clean/alltags.rds")
-
-#sql_loc = "~/Downloads/ybt_database.sqlite"
-sql_loc = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/ac_telemetry_database.sqlite"
-
-con = dbConnect(RSQLite::SQLite(), sql_loc)
-
-dets = dbGetQuery(con, "SELECT * FROM detections") # contains YOLO + SJR + BARD detections
-
-dd = subset(dets, TagID %in% tags$TagCode)
-
-dd$DateTimeUTC = as.POSIXct(dd$DateTimeUTC, tz = "UTC")
-
-d2 = dd[dd$DateTimeUTC > ymd_hms("2010-08-17 00:00:00"), ] # study start
-d2 = tidyr::separate(d2, col = Receiver, sep = "-", into = c("Freq", "Receiver"))
-d2$Receiver = as.integer(d2$Receiver)
-dd = d2[ , c("TagID", "DateTimeUTC", "Receiver", "StudyID")]
-
-dd = merge(d, tags[ , c("TagCode", "StudyID")], by.x = "TagID", by.y = "TagCode") # slow; better to summarise/table by TagCode first, and then join that smaller table
-
-dd$DateTimePST = with_tz(dd$DateTimeUTC, tz = "Etc/GMT+8")
-
-saveRDS(dd, "data/WST_detections.rds")
-
-}
 
 deps = readRDS("data_clean/alldeps.rds") # made in R/parse_deployments.R
 d = readRDS("data/WST_detections.rds") # has already been subset down to only our tags and date range
