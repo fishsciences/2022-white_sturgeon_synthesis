@@ -4,10 +4,10 @@
 library(ggplot2)
 library(lubridate)
 source("R/overlap_funs.R")
-data.dir = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/"
+data.dir = readRDS("data/data_dir_local.rds")
 
 # newest version, sent by UC Davis on 9/10/22
-g = read.csv(file.path(data.dir, "Data/Davis/Deployments_UTC_091022.csv"))
+g = read.csv(file.path(data.dir, "Davis/Deployments_UTC_091022.csv"))
 
 g$Start = gsub("T", " ", g$Start)
 g$Start = as.POSIXct(g$Start, tz = "UTC")
@@ -15,6 +15,8 @@ g$Stop = gsub("T", " ", g$Stop)
 g$Stop = as.POSIXct(g$Stop, tz = "UTC")
 colSums(is.na(g)) # 29 NA value for dep ends, 2 lat long NAs
 
+
+if(FALSE){ # this finds the recs deployed in >1 place at the same time and plots them; only one receiver applies, does not affect our fish
 g2 = g[!is.na(g$Stop) & !is.na(g$Lat), ]
 
 g2 = split(g2, g2$VR2SN)
@@ -27,7 +29,7 @@ gg = unlist(gg, recursive = FALSE)
 gg = gg[sapply(gg, function(x) length(unique(x$Location)) > 1)] # recs with more than 1 location
 length(gg)
 
-out_dir = "output/overlapping_klimley_deps2"
+out_dir = "output/overlapping_klimley_deps"
 
 if(!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
@@ -37,6 +39,7 @@ sapply(names(gg), function(nm) {
                               sprintf("overlap_%s.png", nm)),
          bg = "white")
 })
+}
 
 #---------------------
 # Other checks: # start with g2
@@ -49,18 +52,18 @@ range(g2$Stop)
 ss = c(with_tz(g2$Stop, "Etc/GMT+8"), with_tz(g2$Start, "Etc/GMT+8"))
 summary(hour(ss))
 after_hours = ss[hour(ss) >= 22 | hour(ss) <= 5]
-after_hours # ~260 start/stop times fall within these ranges
+length(after_hours) # ~260 start/stop times fall within these ranges
 range(after_hours) # possible that some times were actually in PT already but were "converted" to UTC
 
 # do any deployments end before they begin?
 stopifnot(sum(g2$Stop < g2$Start) == 0)
 
 # Check format of lat/lons
+summary(g2$Lat)
+summary(g2$Lon)
 
 # Check that lat/longs are consistent within locations
 test = g2[g2$Location == "SR_Freeport", ]
-
-summary(test$Lat)
 stopifnot(min(test$Lat) == max(test$Lat))
 
 chk_coords = function(df) {
@@ -85,8 +88,7 @@ stopifnot(g2$Lon < 0)
 
 g_split = split(g2, g2$Location)
 
-sapply(g_split, FUN = chk_coords)
-
+ans = sapply(g_split, FUN = chk_coords)
 ans[!sapply(ans, is.null)] # all null
 
-#saveRDS(g2, "data/bard_depsQ42022.rds")
+saveRDS(g2, "data/bard_depsQ42022.rds")
