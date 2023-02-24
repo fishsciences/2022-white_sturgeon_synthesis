@@ -1,6 +1,5 @@
-# Combining tag tables to prep for UCD BARD query
+# Combining tag tables from Sac, Yolo, and SJR tagging studies
 # M. Johnston
-# Fri Sep 30 10:27:40 2022 America/Los_Angeles ------------------------------
 
 source('R/utils.R') # sources data-dir script to set dropbox path
 # columns needed:

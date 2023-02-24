@@ -11,13 +11,15 @@ names(bard); names(ydets)
 
 # Check tz; Format bard same as detection table in Yolo detections
 tz(bard$Detect_date_time)  
-bard$DateTimeUTC = bard$Detect_date_time
+bard$DateTimeUTC = as.character(bard$Detect_date_time)
 bard$Receiver = bard$Receiver_ser_num
 bard$TagID = paste(bard$Codespace, bard$Tag_ID, sep = "-")
 bard[,c("TagName", "TagSN")] = NA
 bard$SensorValue = bard$Data
 bard$SensorUnit = bard$Units
+bard$DetOrigin = "BARD"
 
+ydets$DetOrigin = "YOLO"
 tz(ydets$DateTimeUTC)
 cols = colnames(ydets)
 stopifnot(all(cols %in% colnames(bard)))
@@ -31,8 +33,6 @@ table(i)
 # duplicated rows should only be in BARD, not Yolo dets
 in_bard = i[(nrow(ydets)+1):length(i)]
 stopifnot(length(in_bard) == nrow(bard)) 
-
-table(in_bard)
 stopifnot(sum(in_bard) == sum(i)) # yolo dets should not have duplicates, as they were already removed in the ybt project
 
 tmp = as.data.frame(tmp)
@@ -45,6 +45,7 @@ files = list.files(path = data_dir, pattern = ".csv", full.names = TRUE, recursi
 dd = do.call(rbind, lapply(files, read.csv))
 
 # Clean up column names
+dd$DetOrigin = "SJR"
 dd = dplyr::select(dd, 
                    DateTimeUTC = Date.and.Time..UTC.,
                    Receiver,
@@ -52,19 +53,25 @@ dd = dplyr::select(dd,
                    TagName = Transmitter.Name,
                    TagSN = Transmitter.Serial,
                    SensorValue = Sensor.Value,
-                   SensorUnit = Sensor.Unit
+                   SensorUnit = Sensor.Unit,
+                   DetOrigin
 )
 # Check
 tz(dd$DateTimeUTC)
+range(dd$DateTimeUTC)
+dd$DateTimeUTC = as.character(dd$DateTimeUTC)
 # Combine and find dups
 ltmp = as.data.table(dd[ , cols])
 # Need to exclude NA cols, because not marked as dups
 i = duplicated(ltmp[ , c("DateTimeUTC", "Receiver", "TagID")]) #
-sum(i) # db_append should reject 6132 rows
+sum(i) # 6132 rows
 
-sjr = data.frame(ltmp)
+sjr = as.data.frame(ltmp)
 sjr = sjr[!i, ]
 stopifnot(nrow(ltmp) - nrow(sjr) == sum(i))
 
 all_dets = rbind(bard_tmp, sjr)
+all_dets$DateTimeUTC = as.POSIXct(all_dets$DateTimeUTC, tz = "UTC")
+all_dets = all_dets[all_dets$DateTimeUTC > ymd_hms("2010-08-17 00:00:00", tz = "UTC"), ] # study start
+range(all_dets$DateTimeUTC)
 saveRDS(all_dets, "data/combined_detections.rds")
