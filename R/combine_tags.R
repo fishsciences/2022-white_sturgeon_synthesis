@@ -1,7 +1,7 @@
 # Combining tag tables from Sac, Yolo, and SJR tagging studies
 # M. Johnston
 
-source('R/utils.R') # sources data-dir script to set dropbox path
+data.dir = readRDS("data/data_dir_local.rds") # sources data-dir script to set dropbox path
 # columns needed:
 #Tag_ID, DateTagged, Codespace, Freq_kHz, Tagging/Release_location, StudyID, 
 # FL_cm, TagLife_days, TagEnd, Sex
@@ -22,7 +22,7 @@ keepcols = c("StudyID",
 # ------------------------------------
 # San Joaquin River Tags
 #-------------------------------------
-d = readxl::read_excel(file.path(data_dir, "Lodi/LFWO_SJR_WST_Acoustic_Tags.xlsx"))
+d = readxl::read_excel(file.path(data.dir, "Lodi/LFWO_SJR_WST_Acoustic_Tags.xlsx"))
 
 d = d[ , c("TagCode", "DateTagged", "FL_cm", "Sex")]
 
@@ -43,8 +43,8 @@ d = d[ , keepcols]
 # ------------------------------------
 # Yolo Tags
 #-------------------------------------
-y = readxl::read_excel(file.path(data_dir, "Yolo/wst_all_metadata.xlsx"))
-y2 = readxl::read_excel(file.path(data_dir, "Yolo/wst_tags.xlsx"))
+y = readxl::read_excel(file.path(data.dir, "Yolo/wst_all_metadata.xlsx"))
+y2 = readxl::read_excel(file.path(data.dir, "Yolo/wst_tags.xlsx"))
 
 y2 = y2[ , c("DateTagged", "CodeSpace", "TagID", "Sex")]
 y2$TagCode = paste("A69-", y2$CodeSpace, "-", y2$TagID, sep = "")
@@ -67,7 +67,7 @@ y2 = y2[ , keepcols]
 # ------------------------------------
 # Sacramento River Tags
 #-------------------------------------
-m = read.csv(file.path(data_dir, "Sacramento/Miller_USACE_white_sturgeon_tag_ids.csv"))
+m = read.csv(file.path(data.dir, "Sacramento/Miller_USACE_white_sturgeon_tag_ids.csv"))
 
 m = m[, c(
   "Date",

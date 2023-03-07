@@ -12,13 +12,13 @@ db_path = file.path(data.dir, "Yolo/ybt_database.sqlite")
 con = RSQLite::dbConnect(drv = RSQLite::SQLite(), db_path)
 
 # Get and save full tags data from database
-wst = dbGetQuery(con, "select * from wst") # wst yolo tags only
+#wst = dbGetQuery(con, "select * from wst") # wst yolo tags only; not used in this repo, tag source is .xls files on dropbox from original UC Davis study
 dets = dbGetQuery(con,"select * from detections") # detections
-ydep = dbGetQuery(con, "SELECT * FROM deployments;") # deployments
+ydep = dbGetQuery(con, "select * from deployments;") # deployments
 
-saveRDS(wst, "data/wst_yolo.rds")
-saveRDS(dets, "data/yolo_detections.rds")
-saveRDS(ydep, "data/ydep.rds")
+#saveRDS(wst, file.path(data.dir, "Yolo/wst_yolo.rds")) # tagging data comes from project .xlsxs in data.dir
+saveRDS(dets, file.path(data.dir, "Yolo/yolo_detections.rds"))
+saveRDS(ydep, file.path(data.dir, "Yolo/ydep.rds"))
 
 # close connection
 dbDisconnect(con)
