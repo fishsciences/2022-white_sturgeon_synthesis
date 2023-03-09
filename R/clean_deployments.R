@@ -197,7 +197,7 @@ if(any(outside)) alldeps = alldeps[!outside, ]
 ## Add basin to deployment table
 library(sf)
 library(dplyr)
-map = read_sf("data/spatial/Basins.kml")
+map = read_sf(file.path(data.dir, "spatial/Basins.kml"))
 
 alldeps$combo = paste0(alldeps$Latitude, alldeps$Longitude)
 
