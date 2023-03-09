@@ -2,11 +2,11 @@
 # M. Johnston
 library(data.table)
 library(lubridate)
-library(ggplot2)
+#library(ggplot2)
 library(telemetry)
-source("R/utils.R")
+#source("R/utils.R")
 
-deps = readRDS("data_clean/alldeps.rds") # made in R/parse_deployments.R
+deps = readRDS("data_clean/alldeps.rds") # made in R/clean_deployments.R
 d = readRDS("data/WST_detections.rds") # has already been subset down to only our tags and date range
 tags = readRDS("data_clean/alltags.rds")
 stopifnot(all(d$Receiver %in% deps$Receiver))
@@ -37,13 +37,12 @@ good = single[!mults & ! orphan_idx, ]
 
 # these are all the detections that fall within a legit receiver window, no fuzzy match necessary
 saveRDS(good, "data_clean/alldets.rds")
-write.csv(good[ , c("DateTimePST", "TagID", "Receiver", "Location_name", "Latitude", "Longitude", "Origin")], "data_clean/detections_clean2023-01-04.csv")
 
 # create df of orphans:
 orphdf = single[orphan_idx, ]
 
 # write .csvs of remaining orphan detections - will reference if we need to complete a fish's history
-write.csv(orphdf, "data_clean/orphan_dets.csv")
+write.csv(orphdf, "data_clean/orphan_dets.csv", row.names = FALSE)
 
 
 if(FALSE){ # make test detections and deployments set for telemetry::find_orphans()

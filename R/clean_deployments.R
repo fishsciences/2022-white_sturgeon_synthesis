@@ -30,7 +30,7 @@ dd = readRDS("data/WST_detections.rds") # made in combine_detections.R
 
 
 # PATH deployments
-path = readRDS("data/bard_depsQ42022.rds") # made in get_bard_raw_data.R
+path = readRDS("data/bard_depsQ42022.rds") # made in get_bard_deployments.R
 path$Origin = "PATH"
 
 new = c(
@@ -132,7 +132,7 @@ rec_all = unique(c(unique(path$Receiver), yolo_sjr))
 stopifnot(all(rec_dets %in% rec_all)) # should pass now
 
 # YOLO
-ylocs = readxl::read_excel("data/YoloLatLongs.xlsx")
+ylocs = readxl::read_excel(file.path(data.dir, "Yolo/YoloLatLongs.xlsx"))
 colnames(ylocs) = c("Location_name", "Location long", "Latitude", "Longitude")
 ylocs$Origin = "YOLO 2020"
 

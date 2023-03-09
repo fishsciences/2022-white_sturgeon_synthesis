@@ -6,7 +6,7 @@ library(data.table)
 data.dir = readRDS("data/data_dir_local.rds")
 bard_loc = file.path(data.dir, "/Davis/allBARDdets_2022-06-03.rds") # full BARD detections table
 bard = readRDS(bard_loc)
-ydets = readRDS("data/yolo_detections.rds")
+ydets = readRDS(file.path(data.dir, "Yolo/yolo_detections.rds"))
 names(bard); names(ydets)
 
 # Check tz; Format bard same as detection table in Yolo detections
