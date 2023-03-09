@@ -6,8 +6,6 @@ library(leaflet)
 library(ggplot2)
 
 allgis = readRDS("data_clean/alldeps.rds") # made in R/clean_deployments.R
-
-
 allgis$combo = paste0(allgis$Latitude, allgis$Longitude)
 
 allgis %>% 
@@ -23,8 +21,8 @@ cgis = as.data.frame(cgis)
 v = table(cgis$Location_name)
 v[v>1]
 
-write.csv(cgis, "data_clean/all_rec_locs.csv")
-saveRDS(cgis, "data_clean/allgis.rds")
+write.csv(cgis, "data_clean/all_rec_locs.csv") # for use in google earth; this is what we made Basins.shp from
+
 
 leaflet(cgis) %>% 
   addTiles() %>% 

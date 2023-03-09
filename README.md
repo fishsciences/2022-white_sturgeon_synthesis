@@ -13,8 +13,6 @@ Data sources and recipes:
     2. R/combine_detections.R
     3. R/clean_deployments.R
     4. R/qaqc_detections.R
-    5. R/receiver_map.R
-    6. R/categorize_basins.R
 
 # Raw Detections
 

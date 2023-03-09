@@ -192,8 +192,43 @@ alldeps$EndUTC = with_tz(alldeps$End, tzone = "UTC")
 
 # only have deployments that end >= June 2010:
 outside = alldeps$End < as.POSIXct("2010-05-30 23:23:23", tz = "Etc/GMT+8")
-chk = alldeps[outside, ]
-alldeps = alldeps[!outside, ]
+if(any(outside)) alldeps = alldeps[!outside, ]
+
+## Add basin to deployment table
+library(sf)
+library(dplyr)
+map = read_sf("data/spatial/Basins.kml")
+
+alldeps$combo = paste0(alldeps$Latitude, alldeps$Longitude)
+
+alldeps %>% 
+  group_by(Location_name) %>% 
+  arrange(Start) %>% 
+  filter(!duplicated(combo)) %>% 
+  select(-StartUTC, -EndUTC) %>% 
+  ungroup() %>% 
+  arrange(Origin, Location_name, Start) -> cgis
+
+cgis = as.data.frame(cgis)
+stopifnot(!any(table(cgis$Location_name)>1)) # make sure each location is associated with a single lat/lon combo
+
+pnts_sf <- st_as_sf(cgis, coords = c('Longitude', 'Latitude'), crs = st_crs(map))
+
+pnts <- pnts_sf %>% mutate(
+  intersection = as.integer(st_intersects(geometry, map)), 
+  Basin = if_else(is.na(intersection), 'Bay', map$Name[intersection])
+) 
+
+pnts = as.data.frame(pnts)
+v = table(pnts$Location_name)
+stopifnot(!any(v>1)) # still only one locaiton name per combo
+
+# add basin to deployments
+
+alldeps = merge(alldeps, pnts[ , c("Location_name", "combo", "Basin")],
+            all.x = TRUE, by = c("Location_name", "combo"))
+
+alldeps$combo = NULL # remove merging column; don't need in the final table
 
 saveRDS(alldeps, "data_clean/alldeps.rds")
 
