@@ -7,6 +7,14 @@
 Data sources and recipes:
 
     The raw data (detections, deployments, and tags) is stored on the CFS Dropbox (New Projects External Share/WST_synthesis). Access gets configured for individual users in R/set_data_dir.R, which saves an RDS file of the character string for the filepath; this RDS is read in to set the data.dir at the top of most of the qaqc scripts.
+    
+    The order of building the qaqc'd data is:
+    1. R/combine_tags.R
+    2. R/combine_detections.R
+    3. R/clean_deployments.R
+    4. R/qaqc_detections.R
+    5. R/receiver_map.R
+    6. R/categorize_basins.R
 
 # Raw Detections
 

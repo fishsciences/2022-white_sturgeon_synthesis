@@ -1,12 +1,11 @@
 # Receiver map
 # M. Johnston
-# Wed Jun 29 21:35:39 2022 ------------------------------
 
 library(dplyr)
 library(leaflet)
 library(ggplot2)
 
-allgis = readRDS("data_clean/alldeps.rds") # made in R/parse_deployments.R
+allgis = readRDS("data_clean/alldeps.rds") # made in R/clean_deployments.R
 
 
 allgis$combo = paste0(allgis$Latitude, allgis$Longitude)
@@ -39,9 +38,7 @@ leaflet(cgis) %>%
 
 # visualize gaps
 
-deps = readRDS("data_clean/alldeps.rds") # made in R/parse_deployments.R - not QAQC'd yet
-
-y = deps[deps$Origin == "YOLO 2020", ]
+y = allgis[allgis$Origin == "YOLO 2020", ]
 
 y$Year = lubridate::year(y$Start)
 y$jday_start = as.integer(format(y$Start, "%j"))

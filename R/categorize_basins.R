@@ -1,13 +1,14 @@
 # add basins to receiver locations
 # M. Johnston
-# Tue Jan 10 09:11:02 2023 America/Los_Angeles ------------------------------
-
 
 library(sf)
 library(dplyr)
 
 map = read_sf("data/spatial/Basins.kml")
 gis = readRDS("data_clean/allgis.rds")
+deps = readRDS("data_clean/alldeps.rds")
+d = readRDS("data_clean/alldets.rds")
+
 
 pnts_sf <- st_as_sf(gis, coords = c('Longitude', 'Latitude'), crs = st_crs(map))
 
@@ -30,9 +31,7 @@ gis[gis$Location_name == "SJR LR", ]
 gis[gis$Location_name == "SJR UR", ]
 
 # add basin to deployments
-deps = readRDS("data_clean/alldeps.rds")
 deps$combo = paste0(deps$Latitude, deps$Longitude)
-
 
 ans = merge(deps, pnts[ , c("Location_name", "combo", "Basin")],
             all.x = TRUE, by = c("Location_name", "combo"))
@@ -40,9 +39,7 @@ ans = merge(deps, pnts[ , c("Location_name", "combo", "Basin")],
 write.csv(ans, "data_clean/alldeps_with_basin.csv", row.names = FALSE)
 
 # add basin to detections
-d = readRDS("data_clean/alldets.rds")
 d = d[ , c("Receiver", "Location_name", "TagID", "DateTimePST", "Origin")]
-ans = read.csv("data_clean/alldeps_with_basin.csv")
 
 ans2 = merge(d, ans[ , c("Location_name", "Receiver", "Basin")],
              all.x = TRUE)
