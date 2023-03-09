@@ -13,6 +13,7 @@ Data sources and recipes:
     2. R/combine_detections.R
     3. R/clean_deployments.R
     4. R/qaqc_detections.R
+    5. R/make_sqlite_db.R
 
 # Raw Detections
 

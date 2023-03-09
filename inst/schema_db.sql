@@ -1,18 +1,14 @@
 CREATE TABLE tags (
-  DateTagged TEXT,
-  TagID INTEGER NOT NULL,
-  TagSN INTEGER,
-  CodeSpace INTEGER,
-  EstTagLife_days REAL,
-  Species TEXT,
-  TL REAL,
-  FL REAL,
-  Sex TEXT,
-  TagLoc TEXT,
   StudyID TEXT,
-  Comments TEXT,
-  FishID REAL,
-  PRIMARY KEY(TagID, TagSN, DateTagged, FishID)
+  DateTagged TEXT NOT NULL,
+  TagID INTEGER NOT NULL,
+  CodeSpace INTEGER,
+  TagCode TEXT,
+  Release_location TEXT,
+  FL_cm REAL,
+  Sex TEXT,
+  TagEnd TEXT,
+  PRIMARY KEY(TagID, DateTagged, StudyID)
 );
 
 CREATE TABLE detections (
