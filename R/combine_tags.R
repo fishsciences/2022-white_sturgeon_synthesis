@@ -103,7 +103,7 @@ m = m[ , keepcols]
 
 # all = merge x and San Joaquin River tags
 all.tags = dplyr::bind_rows(d, y2, m)
-csn(all.tags)
+colSums(is.na(all.tags))
 range(all.tags$DateTagged)
 
 sort(unique(all.tags$Sex))
@@ -112,7 +112,16 @@ all.tags$Sex[all.tags$Sex == "AF"] <- "F"
 all.tags$Sex[all.tags$Sex == "f"] <- "F"
 all.tags$Sex[all.tags$Sex %in% c("u", "U ", "U (male?)")] <- "U"
 
+all.tags$Release_location[all.tags$Release_location %in% c("sb", "SB", "SUISUN BAY")] <- "Suisun Bay"
+
+all.tags$Release_location[all.tags$Release_location %in% c("spb", "SPB")] <- "San Pablo Bay"
+all.tags$Release_location[all.tags$Release_location %in% c("GB", "grizzly bay")] <- "Grizzly Bay"
+
 table(all.tags$Sex)
+table(all.tags$Release_location)
+
+# final database formatting
+all.tags = dplyr::rename(all.tags, ReleaseLocation = Release_location)
 
 saveRDS(all.tags, "data_clean/alltags.rds")
 write.csv(all.tags, "data_clean/alltags.csv")
