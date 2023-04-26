@@ -1,4 +1,4 @@
-CREATE TABLE merged_detections (
+CREATE TABLE detections (
   Receiver INTEGER NOT NULL,
   LocationName TEXT NOT NULL,
   TagID TEXT NOT NULL,

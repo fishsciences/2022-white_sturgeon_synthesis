@@ -35,6 +35,11 @@ mults = idx$xid %in% names(b) # logical index of multiples; sum should now be ze
 
 good = single[!mults & ! orphan_idx, ]
 
+cols_keep = c("Receiver", "Location_name", "Latitude", "Longitude", "Basin", "TagID", "DateTimePST",
+              "DetOrigin", "StudyID")
+
+good = good[ , cols_keep]
+
 # these are all the detections that fall within a legit receiver window, no fuzzy match necessary
 saveRDS(good, "data_clean/alldets.rds")
 
