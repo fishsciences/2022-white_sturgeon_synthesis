@@ -14,6 +14,11 @@ Data sources and recipes:
     3. R/clean_deployments.R
     4. R/qaqc_detections.R
     5. R/make_sqlite_db.R
+    
+
+Intermediate Products:
+
+data_clean/all_rec_locs.csv: made in R/receiver_map.R
 
 # Raw Detections
 

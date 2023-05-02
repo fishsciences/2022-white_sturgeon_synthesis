@@ -34,6 +34,14 @@ leaflet(cgis) %>%
                    labelOptions = labelOptions(permanent = FALSE, noHide = FALSE)) 
 
 
+# for plotting in google earth, optional bounds:
+if(FALSE){
+  deps = readRDS("data_clean/alldeps.rds")
+  # bounds
+  deps = subset(deps, Longitude > -122.65 & Longitude < -120.0 & Latitude > 37.1 & Latitude < 44) # cuts out the Pt_Reyes receivers, but we don't need to
+  write.csv(deps, "data_clean/alldeps.csv")
+  
+}
 # visualize gaps
 
 y = allgis[allgis$Origin == "YOLO 2020", ]
@@ -68,6 +76,6 @@ x = yt[1:4, 1:4]
 
 gapcheck = difftime(x$Start[-1], x$End[-length(x$End)], units = "secs") > 48*60*60
 
-# We want to insert a row into the right place - the 
+# We want to insert a row into the right place 
 gapstart = x$End[which(gapcheck)]
 gapend = x$Start[which(gapcheck) + 1]

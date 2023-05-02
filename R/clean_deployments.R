@@ -60,7 +60,7 @@ chk = path[outside, ]
 path = path[!outside, ]
 
 # load Yolo and Lodi
-ydep = readRDS("data/ydep.rds") # made in get_yolo_raw_data.R
+ydep = readRDS(file.path(data.dir, "Yolo/ydep.rds")) # made in get_yolo_raw_data.R
 ydep$Location_name = ydep$Station
 ydep$Notes = paste(ydep$VRLNotes, ydep$DeploymentNotes)
 
@@ -231,12 +231,3 @@ alldeps = merge(alldeps, pnts[ , c("Location_name", "combo", "Basin")],
 alldeps$combo = NULL # remove merging column; don't need in the final table
 
 saveRDS(alldeps, "data_clean/alldeps.rds")
-
-# for plotting in google earth, optional bounds:
-if(FALSE){
-  deps = readRDS("data_clean/alldeps.rds")
-  # bounds
-  # deps = subset(deps, Longitude > -122.65 & Longitude < -120.0 & Latitude > 37.1 & Latitude < 44) # cuts out the Pt_Reyes receivers, but we don't need to
-  write.csv(deps, "data_clean/alldeps.csv")
-  
-}
