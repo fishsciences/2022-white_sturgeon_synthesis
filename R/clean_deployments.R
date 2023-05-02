@@ -1,21 +1,11 @@
-# Parse Deployments tables
+# Parse Deployment tables
 # M. Johnston
-# Wed Sep 28 08:50:08 2022 America/Los_Angeles ------------------------------
 
-library(RSQLite)
 library(data.table)
 library(telemetry)
 library(lubridate)
 source("R/overlap_funs.R")
-data.dir = "~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/"
-if(FALSE){
-  # YOLO deployments original
-  sql_loc = file.path(data.dir, "ac_telemetry_database.sqlite") # yolo + BARD
-  con = dbConnect(RSQLite::SQLite(), sql_loc)
-  ydep = dbGetQuery(con, "SELECT * FROM deployments;")
-  dbDisconnect(con)
-  saveRDS(ydep, "data/ydep.rds")
-}
+data.dir = readRDS("data/data_dir_local.rds")
 
 ## Receiver bounds: Longitude -120.0, Latitude 37.2
 ## Detection bounds: "2010-08-17" - "2022-01-01"
@@ -36,11 +26,11 @@ cols_keep = c("Location_name",
 
 # Detections
 # Compare the receivers our fish were actually detected on to our deployments data
-dd = readRDS("data/WST_detections.rds")
+dd = readRDS("data/WST_detections.rds") # made in combine_detections.R
 
 
 # PATH deployments
-path = readRDS("data/bard_depsQ42022.rds") # made in qaqc_klimbley.R
+path = readRDS("data/bard_depsQ42022.rds") # made in get_bard_deployments.R
 path$Origin = "PATH"
 
 new = c(
@@ -70,7 +60,7 @@ chk = path[outside, ]
 path = path[!outside, ]
 
 # load Yolo and Lodi
-ydep = readRDS("data/ydep.rds")
+ydep = readRDS(file.path(data.dir, "Yolo/ydep.rds")) # made in get_yolo_raw_data.R
 ydep$Location_name = ydep$Station
 ydep$Notes = paste(ydep$VRLNotes, ydep$DeploymentNotes)
 
@@ -103,24 +93,6 @@ comp = path[path$Receiver %in% unique(sjr$Receiver), ] # checked these w/ Laura 
 range(comp$End)
 path = dplyr::anti_join(path, comp)
 
-# end_times = readxl::read_excel(file.path(data.dir, "Lodi/OneDrive_1_6-13-2022/Full Receiver History_Updated Jun2017.xlsx"), sheet = 1)
-# 
-# end_times$`Receiver Time @ Log Start (PST)` = force_tz(end_times$`Receiver Time @ Log Start (PST)`, tz = "Etc/GMT+8")
-# 
-# end_times$StartDate = as.Date(end_times$`Receiver Time @ Log Start (PST)`)
-# sjr$StartDate = as.Date(sjr$Start)
-# 
-# # make a column to math on
-# end_times$Rec_StartDate = paste(end_times$Serial_Number, end_times$StartDate)
-# sjr$Rec_StartDate = paste(sjr$Receiver, sjr$StartDate)
-# 
-# # for each index in x, find the first match in y
-# ii =  match(end_times$Rec_StartDate, sjr$Rec_StartDate) # has NAs, but need to keep it in the same order
-# sjr$StartDate[na.omit(ii)] = end_times$StartDate[!is.na(ii)] # pattern for using match
-# 
-# sjr$End[na.omit(ii)] = end_times$`Receiver Time @ Log Upload (PST)`[!is.na(ii)] # pattern for using match
-
-
 yolo_sjr = c(unique(ydep$Receiver), unique(sjr$Receiver))
 
 # Isolate receivers on which we have detections
@@ -133,11 +105,11 @@ all(rec_dets %in% rec_all)
 rec_dets[!rec_dets %in% rec_all] # 546698 has detections but no deployment info
 
 range(dd$DateTimeUTC[dd$Receiver == 546698])
-nrow(dd[dd$Receiver == 546698, ]) # 20k detections between Jan 2018 & July 2018
+nrow(dd[dd$Receiver == 546698, ]) # 21k detections between Jan 2018 & July 2018
 length(unique(dd$TagID[dd$Receiver == 546698])) # 55 of our fish; not insignificant
 
 # is it in the old records?
-bd = readRDS("data/BARD_deployments_all_2022-06-24.rds")
+bd = readRDS("data/BARD_deployments_all_2022-06-24.rds") # query prior to the Sept 2022 one
 ans = bd[bd$Receiver_ser_num == 546698, ] # decker island from Jan 17-July 23; exact missing period
 
 # add this deployment info in:
@@ -160,7 +132,7 @@ rec_all = unique(c(unique(path$Receiver), yolo_sjr))
 stopifnot(all(rec_dets %in% rec_all)) # should pass now
 
 # YOLO
-ylocs = readxl::read_excel("data/YoloLatLongs.xlsx")
+ylocs = readxl::read_excel(file.path(data.dir, "Yolo/YoloLatLongs.xlsx"))
 colnames(ylocs) = c("Location_name", "Location long", "Latitude", "Longitude")
 ylocs$Origin = "YOLO 2020"
 
@@ -170,10 +142,9 @@ ydep = merge(ydep,  ylocs[ , c("Location_name", "Longitude", "Latitude")], all.x
 ydep$End[is.na(ydep$End)] <- as.POSIXct("2019-08-21 11:05:00", tz = "Etc/GMT+8")
 
 # LODI
-lodi = readxl::read_excel("~/DropboxCFS/NEW PROJECTS - EXTERNAL SHARE/WST_Synthesis/Data/Lodi/LFWO_SJR_WST_Receiver_Deployment.xlsx")
+lodi = readxl::read_excel(file.path(data.dir, "Lodi/LFWO_SJR_WST_Receiver_Deployment.xlsx"))
 
 # need to take it down to 4 decimals; verify that there's only 1 lat/long per location_name
-
 lodi = dplyr::rename(lodi, Location_name = Station)
 lodi = as.data.frame(lodi[ , c("Location_name", "Longitude", "Latitude")])
 stopifnot(all(sjr$Location_name %in% lodi$Location_name))
@@ -201,10 +172,9 @@ scs_ins$Origin = "BARD 2020"
 scs_ins$Notes = "this row added in parse_deployments.R, Dec 2022"
 
 alldeps = rbind(alldeps, scs_ins)
-
 alldeps = alldeps[order(alldeps$Receiver, alldeps$Start), ]
 
-# check
+# manual checks
 summary(unique(alldeps$Receiver))
 summary(alldeps$Latitude)
 summary(alldeps$Longitude)
@@ -216,22 +186,48 @@ range(alldeps$Start)
 alldeps$Longitude[alldeps$Longitude > 0] <- alldeps$Longitude[alldeps$Longitude > 0]*(-1)
 stopifnot(alldeps$Longitude < 0)
 
-# add column of PST
+# add column of UTC
 alldeps$StartUTC = with_tz(alldeps$Start, tzone = "UTC")
 alldeps$EndUTC = with_tz(alldeps$End, tzone = "UTC")
 
 # only have deployments that end >= June 2010:
 outside = alldeps$End < as.POSIXct("2010-05-30 23:23:23", tz = "Etc/GMT+8")
-chk = alldeps[outside, ]
-alldeps = alldeps[!outside, ]
+if(any(outside)) alldeps = alldeps[!outside, ]
+
+## Add basin to deployment table
+library(sf)
+library(dplyr)
+map = read_sf(file.path(data.dir, "spatial/Basins.kml"))
+
+alldeps$combo = paste0(alldeps$Latitude, alldeps$Longitude)
+
+alldeps %>% 
+  group_by(Location_name) %>% 
+  arrange(Start) %>% 
+  filter(!duplicated(combo)) %>% 
+  select(-StartUTC, -EndUTC) %>% 
+  ungroup() %>% 
+  arrange(Origin, Location_name, Start) -> cgis
+
+cgis = as.data.frame(cgis)
+stopifnot(!any(table(cgis$Location_name)>1)) # make sure each location is associated with a single lat/lon combo
+
+pnts_sf <- st_as_sf(cgis, coords = c('Longitude', 'Latitude'), crs = st_crs(map))
+
+pnts <- pnts_sf %>% mutate(
+  intersection = as.integer(st_intersects(geometry, map)), 
+  Basin = if_else(is.na(intersection), 'Bay', map$Name[intersection])
+) 
+
+pnts = as.data.frame(pnts)
+v = table(pnts$Location_name)
+stopifnot(!any(v>1)) # still only one locaiton name per combo
+
+# add basin to deployments
+
+alldeps = merge(alldeps, pnts[ , c("Location_name", "combo", "Basin")],
+            all.x = TRUE, by = c("Location_name", "combo"))
+
+alldeps$combo = NULL # remove merging column; don't need in the final table
+
 saveRDS(alldeps, "data_clean/alldeps.rds")
-
-
-
-if(FALSE){
-  deps = readRDS("data_clean/alldeps.rds")
-  # bounds
-  # allgis = subset(deps, Longitude > -122.65 & Longitude < -120.0 & Latitude > 37.1 & Latitude < 44) # cuts out the Pt_Reyes receivers, but we don't need to
-  write.csv(deps, "data_clean/alldeps.csv")
-  
-}

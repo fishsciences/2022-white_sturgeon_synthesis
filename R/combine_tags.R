@@ -1,8 +1,7 @@
-# Combining tag tables to prep for UCD BARD query
+# Combining tag tables from Sac, Yolo, and SJR tagging studies
 # M. Johnston
-# Fri Sep 30 10:27:40 2022 America/Los_Angeles ------------------------------
 
-source('R/utils.R') # sources data-dir script to set dropbox path
+data.dir = readRDS("data/data_dir_local.rds") # sources data-dir script to set dropbox path
 # columns needed:
 #Tag_ID, DateTagged, Codespace, Freq_kHz, Tagging/Release_location, StudyID, 
 # FL_cm, TagLife_days, TagEnd, Sex
@@ -23,7 +22,7 @@ keepcols = c("StudyID",
 # ------------------------------------
 # San Joaquin River Tags
 #-------------------------------------
-d = readxl::read_excel(file.path(data_dir, "Lodi/LFWO_SJR_WST_Acoustic_Tags.xlsx"))
+d = readxl::read_excel(file.path(data.dir, "Lodi/LFWO_SJR_WST_Acoustic_Tags.xlsx"))
 
 d = d[ , c("TagCode", "DateTagged", "FL_cm", "Sex")]
 
@@ -44,8 +43,8 @@ d = d[ , keepcols]
 # ------------------------------------
 # Yolo Tags
 #-------------------------------------
-y = readxl::read_excel(file.path(data_dir, "Yolo/wst_all_metadata.xlsx"))
-y2 = readxl::read_excel(file.path(data_dir, "Yolo/wst_tags.xlsx"))
+y = readxl::read_excel(file.path(data.dir, "Yolo/wst_all_metadata.xlsx"))
+y2 = readxl::read_excel(file.path(data.dir, "Yolo/wst_tags.xlsx"))
 
 y2 = y2[ , c("DateTagged", "CodeSpace", "TagID", "Sex")]
 y2$TagCode = paste("A69-", y2$CodeSpace, "-", y2$TagID, sep = "")
@@ -68,7 +67,7 @@ y2 = y2[ , keepcols]
 # ------------------------------------
 # Sacramento River Tags
 #-------------------------------------
-m = read.csv(file.path(data_dir, "Sacramento/Miller_USACE_white_sturgeon_tag_ids.csv"))
+m = read.csv(file.path(data.dir, "Sacramento/Miller_USACE_white_sturgeon_tag_ids.csv"))
 
 m = m[, c(
   "Date",
@@ -104,7 +103,7 @@ m = m[ , keepcols]
 
 # all = merge x and San Joaquin River tags
 all.tags = dplyr::bind_rows(d, y2, m)
-csn(all.tags)
+colSums(is.na(all.tags))
 range(all.tags$DateTagged)
 
 sort(unique(all.tags$Sex))
@@ -113,7 +112,16 @@ all.tags$Sex[all.tags$Sex == "AF"] <- "F"
 all.tags$Sex[all.tags$Sex == "f"] <- "F"
 all.tags$Sex[all.tags$Sex %in% c("u", "U ", "U (male?)")] <- "U"
 
+all.tags$Release_location[all.tags$Release_location %in% c("sb", "SB", "SUISUN BAY")] <- "Suisun Bay"
+
+all.tags$Release_location[all.tags$Release_location %in% c("spb", "SPB")] <- "San Pablo Bay"
+all.tags$Release_location[all.tags$Release_location %in% c("GB", "grizzly bay")] <- "Grizzly Bay"
+
 table(all.tags$Sex)
+table(all.tags$Release_location)
+
+# final database formatting
+all.tags = dplyr::rename(all.tags, ReleaseLocation = Release_location)
 
 saveRDS(all.tags, "data_clean/alltags.rds")
 write.csv(all.tags, "data_clean/alltags.csv")

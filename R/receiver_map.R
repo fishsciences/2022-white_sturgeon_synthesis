@@ -1,14 +1,11 @@
 # Receiver map
 # M. Johnston
-# Wed Jun 29 21:35:39 2022 ------------------------------
 
 library(dplyr)
 library(leaflet)
 library(ggplot2)
 
-allgis = readRDS("data_clean/alldeps.rds") # made in R/parse_deployments.R
-
-
+allgis = readRDS("data_clean/alldeps.rds") # made in R/clean_deployments.R
 allgis$combo = paste0(allgis$Latitude, allgis$Longitude)
 
 allgis %>% 
@@ -24,8 +21,8 @@ cgis = as.data.frame(cgis)
 v = table(cgis$Location_name)
 v[v>1]
 
-write.csv(cgis, "data_clean/all_rec_locs.csv")
-saveRDS(cgis, "data_clean/allgis.rds")
+write.csv(cgis, "data_clean/all_rec_locs.csv") # for use in google earth; this is what we made Basins.shp from
+
 
 leaflet(cgis) %>% 
   addTiles() %>% 
@@ -37,11 +34,17 @@ leaflet(cgis) %>%
                    labelOptions = labelOptions(permanent = FALSE, noHide = FALSE)) 
 
 
+# for plotting in google earth, optional bounds:
+if(FALSE){
+  deps = readRDS("data_clean/alldeps.rds")
+  # bounds
+  deps = subset(deps, Longitude > -122.65 & Longitude < -120.0 & Latitude > 37.1 & Latitude < 44) # cuts out the Pt_Reyes receivers, but we don't need to
+  write.csv(deps, "data_clean/alldeps.csv")
+  
+}
 # visualize gaps
 
-deps = readRDS("data_clean/alldeps.rds") # made in R/parse_deployments.R - not QAQC'd yet
-
-y = deps[deps$Origin == "YOLO 2020", ]
+y = allgis[allgis$Origin == "YOLO 2020", ]
 
 y$Year = lubridate::year(y$Start)
 y$jday_start = as.integer(format(y$Start, "%j"))
@@ -73,6 +76,6 @@ x = yt[1:4, 1:4]
 
 gapcheck = difftime(x$Start[-1], x$End[-length(x$End)], units = "secs") > 48*60*60
 
-# We want to insert a row into the right place - the 
+# We want to insert a row into the right place 
 gapstart = x$End[which(gapcheck)]
 gapend = x$Start[which(gapcheck) + 1]

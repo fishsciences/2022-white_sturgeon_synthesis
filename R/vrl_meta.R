@@ -1,7 +1,7 @@
 # Lodi vrl data EDA
 # M. Johnston
 # Tue Mar 15 13:31:37 2022 ------------------------------
-
+library(dplyr)
 data_dir = readRDS("data/data_dir_local.rds")
 files = list.files(file.path(data_dir, "Lodi/LFWO_SJR_WST_ALL_VR2W.VRL"), full.names = TRUE)
 files2 = grep(pattern = "VR2W180_|-RLD_", files, invert = TRUE, value = TRUE) # invert gives us all the things that don't match, and value = TRUE says return the actual string, not the index of the location of the string
@@ -56,7 +56,13 @@ ans$chk = factor(ans$chk, levels = 0:2, labels = c("No match within deployments"
 
 ans[ans$chk == "Multiple matches within a deployment", ]
 
-dep[dep$Receiver == 113007, ]
+dep[dep$Receiver == 125874, ]
+ans[ans$chk == "No match within deployments", ]
+
+dep %>% 
+  filter(Receiver == 106770) %>% 
+  arrange(DeploymentStart)
+
 
 # Check Start is before end deployment
 stopifnot(all(dep$DeploymentStart < dep$DeploymentEnd))
@@ -66,10 +72,10 @@ tt = table(dep$Receiver)
 tt[ tt > 1 ]
 
 # "combo" might already resolve these
-stopifnot(all(sort(table(dep$combo)) == 1))
+stopifnot(all(sort(table(dep$combo)) == 1)) # stop if there are any combos with > 1 deployment
 
 # deployment gaps and coverage
-tmp = split(dep, dep$Station)
+tmp = split(dep, dep$combo)
 
 sapply(tmp, nrow)
 
@@ -78,9 +84,15 @@ dep_range = lapply(tmp, function(df){
 })
 
 dep_gaps = lapply(tmp, function(df) {
-    if(nrow(df) > 1) {
-        df = df[order(df$DeploymentStart),]
-        difftime(df$DeploymentStart[-1], df$DeploymentEnd[-nrow(df)], units = "days")
+    if(nrow(df) > 1) { # if there is more than one deployment of this rec,
+        df = df[order(df$DeploymentStart),] # order by start date
+        difftime(df$DeploymentStart[-1], df$DeploymentEnd[-nrow(df)], units = "days") # calculate lagged diff between deployments
     } else
         0
 })
+
+(do.call(rbind, dep_gaps)) # "... the number of columns (rows) of the result is determined by the number of columns (rows) of the matrix arguments. Any vectors have their values recycled or subsetted to achieve this length."  inotherwords, the shorter vectors get recycled to match the longest vectors in order to be made into a data frame.
+
+# the negative values indicate that subsequent deployments begin before the previous deployments end...?
+
+  
