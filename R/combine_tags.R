@@ -1,15 +1,21 @@
 # Combining tag tables from Sac, Yolo, and SJR tagging studies
+# Standardizes columns and entries, joins together and exports into an .rds with all the TagIDs together
 # M. Johnston
 
+#------------------------------------------------------
+# input: individual tag metadata tables, from data.dir/
+# outputs: data_clean/alltags.rds
+#----------------------------------------------------
+library(lubridate)
 data.dir = readRDS("data/data_dir_local.rds") # sources data-dir script to set dropbox path
+
 # columns needed:
-#Tag_ID, DateTagged, Codespace, Freq_kHz, Tagging/Release_location, StudyID, 
+# Tag_ID, DateTagged, Codespace, Freq_kHz, Tagging/Release_location, StudyID, 
 # FL_cm, TagLife_days, TagEnd, Sex
 
-# ONly want V16 tags - no V13s or PIT tags
+# Only want V16 tags - no V13s or PIT tags
 # All SJR and SAC fish are 10-year tags; YOLO you have to use the TAgLifeEnd column
 
-library(lubridate)
 keepcols = c("StudyID", 
              "DateTagged",
              "TagID",
@@ -43,8 +49,8 @@ d = d[ , keepcols]
 # ------------------------------------
 # Yolo Tags
 #-------------------------------------
-y = readxl::read_excel(file.path(data.dir, "Yolo/wst_all_metadata.xlsx"))
-y2 = readxl::read_excel(file.path(data.dir, "Yolo/wst_tags.xlsx"))
+y = readxl::read_excel(file.path(data.dir, "Yolo/wst_all_metadata.xlsx")) # has tag life end
+y2 = readxl::read_excel(file.path(data.dir, "Yolo/wst_tags.xlsx")) # has everything else
 
 y2 = y2[ , c("DateTagged", "CodeSpace", "TagID", "Sex")]
 y2$TagCode = paste("A69-", y2$CodeSpace, "-", y2$TagID, sep = "")
@@ -124,4 +130,3 @@ table(all.tags$Release_location)
 all.tags = dplyr::rename(all.tags, ReleaseLocation = Release_location)
 
 saveRDS(all.tags, "data_clean/alltags.rds")
-write.csv(all.tags, "data_clean/alltags.csv")

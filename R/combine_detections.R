@@ -2,6 +2,11 @@
 # M. Johnston
 library(lubridate)
 library(data.table)
+#----------------------------------
+# inputs: raw detections files, data_clean/alltags.rds
+# outputs: an intermediate product, data/WST_detections.rds; this gets used in qaqc_detections.R
+# This script is very slow; try to avoid running it often (or profile/refactor)
+#----------------------------------
 
 data.dir = readRDS("data/data_dir_local.rds")
 bard_loc = file.path(data.dir, "/Davis/allBARDdets_2022-06-03.rds") # full BARD detections table
@@ -75,7 +80,7 @@ all_dets$DateTimeUTC = as.POSIXct(all_dets$DateTimeUTC, tz = "UTC")
 all_dets = all_dets[all_dets$DateTimeUTC > ymd_hms("2010-08-17 00:00:00", tz = "UTC"), ] # study
 
 # subset detections down to just our study fish
-tags = readRDS("data_clean/alltags.rds")
+tags = readRDS("data_clean/alltags.rds") # made in R/combine_tags.R
 
 dd = subset(all_dets, TagID %in% tags$TagCode)
 dd = tidyr::separate(dd, col = Receiver, sep = "-", into = c("Freq", "Receiver"))
