@@ -6,14 +6,15 @@
 
 Data sources and recipes:
 
-    The raw data (detections, deployments, and tags) is stored on the CFS Dropbox (New Projects External Share/WST_synthesis). Access gets configured for individual users in R/set_data_dir.R, which saves an RDS file of the character string for the filepath; this RDS is read in to set the data.dir at the top of most of the qaqc scripts.
-    
-    The order of building the qaqc'd data is:
+The raw data (detections, deployments, and tags) is stored on the CFS Dropbox (New Projects External Share/WST_synthesis). Access gets configured for individual users in R/set_data_dir.R, which saves an RDS file of the character string for the filepath; this RDS is read in to set the data.dir at the top of most of the qaqc scripts.
+
+The order of building the qaqc'd data is:
     1. R/combine_tags.R
     2. R/combine_detections.R
-    3. R/clean_deployments.R
-    4. R/qaqc_detections.R
-    5. R/make_sqlite_db.R
+    3. R/get_bard_deployments.R # preps the BARD deployments table from raw data
+    4. R/clean_deployments.R # combines deployments tables and adds basin
+    5. R/qaqc_detections.R
+    6. R/make_sqlite_db.R
     
 
 Intermediate Products:
@@ -55,7 +56,7 @@ data_clean/all_rec_locs.csv: made in R/receiver_map.R
 * Output: data.dir/Yolo/ydep.rds
   
 ### bard/path
-* Source: PATH deployments .csv, sent by UC Davis on 9/10/22: data.dir/Davis/Deployments_UTC_091022.csv. We also use data/BARD_deployments_all_2022-06-24.rds, which was queried in the same script as the BARD detections.
+* Source: PATH deployments .csv, sent by UC Davis on 9/10/22: data.dir/Davis/Deployments_UTC_091022.csv. To correct a missing record from that csv, we also use data/BARD_deployments_all_2022-06-24.rds, which was queried in the same script as the BARD detections.
 * Script: R/get_bard_deployments.R. Does some formatting and checking to prep for combining.
 * Output: data/bard_depsQ42022.rds
 
