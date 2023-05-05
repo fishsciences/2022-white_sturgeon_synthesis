@@ -13,7 +13,7 @@ The order of building the qaqc'd data is:
     2. R/combine_detections.R
     3. R/get_bard_deployments.R # preps the BARD deployments table from raw data
     4. R/clean_deployments.R # combines deployments tables and adds basin
-    5. R/qaqc_detections.R
+    5. R/qaqc_detections.R # removes orphan detections
     6. R/make_sqlite_db.R
     
 
