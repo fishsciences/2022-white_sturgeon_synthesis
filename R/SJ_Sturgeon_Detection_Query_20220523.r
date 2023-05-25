@@ -1,9 +1,11 @@
-# All of these packages will be necessary to do the following steps.
-#library(tidyverse)
+# This is the original query used to get the full detections, deployments, and receiver lat/long data from the old Klimley server (Biotelemetry Lab, UC Davis).  This query was run on 2022-06-03 and the data was saved locally, then added to the data.dir for use in this analysis.
+# Data and script are now READ ONLY.
+# This script is just to document where the data came from.
+# M. Johnston
+#-----------------------------------
 library(DBI)
 library(RPostgres)
-# library(dbplyr)
-# library(tidyr)
+
 
 # Load .Renviron file.
 readRenviron("~/Desktop/.Renviron")

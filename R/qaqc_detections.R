@@ -1,10 +1,8 @@
-# QAQC Detections
+# QAQC Detections - checks that each detection has a "home" in a valid deployment window, and removes any that don't ("orphan" detections)
 # M. Johnston
 library(data.table)
 library(lubridate)
-#library(ggplot2)
 library(telemetry)
-#source("R/utils.R")
 
 deps = readRDS("data_clean/alldeps.rds") # made in R/clean_deployments.R
 d = readRDS("data/WST_detections.rds") # has already been subset down to only our tags and date range
@@ -27,13 +25,14 @@ idx = find_orphans(d,
                    which = TRUE, 
                    fuzzy_match = 0L)
 
-orphan_idx = is.na(single$Start) # logical index of orphans
+orphan_idx = is.na(single$Start) # logical index of orphans; 3594 orphan dets
 y = table(idx$xid)
 b = y[y>1]
 idx_rows = as.numeric(names(b)) # numeric index of multiples
 mults = idx$xid %in% names(b) # logical index of multiples; sum should now be zero
+stopifnot(sum(mults) == 0)
 
-good = single[!mults & ! orphan_idx, ]
+good = single[!mults & !orphan_idx, ]
 
 cols_keep = c("Receiver", "Location_name", "Latitude", "Longitude", "Basin", "TagID", "DateTimePST",
               "DetOrigin", "StudyID")

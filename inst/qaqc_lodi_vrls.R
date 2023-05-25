@@ -1,4 +1,4 @@
-# Lodi vrl data EDA
+# Lodi vrl data qaqc
 # M. Johnston
 # Tue Mar 15 13:31:37 2022 ------------------------------
 library(dplyr)
@@ -55,14 +55,7 @@ ans$chk = factor(ans$chk, levels = 0:2, labels = c("No match within deployments"
                                                    "Multiple matches within a deployment"))
 
 ans[ans$chk == "Multiple matches within a deployment", ]
-
-dep[dep$Receiver == 125874, ]
 ans[ans$chk == "No match within deployments", ]
-
-dep %>% 
-  filter(Receiver == 106770) %>% 
-  arrange(DeploymentStart)
-
 
 # Check Start is before end deployment
 stopifnot(all(dep$DeploymentStart < dep$DeploymentEnd))
@@ -92,7 +85,5 @@ dep_gaps = lapply(tmp, function(df) {
 })
 
 (do.call(rbind, dep_gaps)) # "... the number of columns (rows) of the result is determined by the number of columns (rows) of the matrix arguments. Any vectors have their values recycled or subsetted to achieve this length."  inotherwords, the shorter vectors get recycled to match the longest vectors in order to be made into a data frame.
-
-# the negative values indicate that subsequent deployments begin before the previous deployments end...?
 
   

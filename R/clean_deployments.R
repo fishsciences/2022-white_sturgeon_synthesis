@@ -109,7 +109,7 @@ nrow(dd[dd$Receiver == 546698, ]) # 21k detections between Jan 2018 & July 2018
 length(unique(dd$TagID[dd$Receiver == 546698])) # 55 of our fish; not insignificant
 
 # is it in the old records?
-bd = readRDS("data/BARD_deployments_all_2022-06-24.rds") # query prior to the Sept 2022 one
+bd = readRDS(file.path(data.dir, "Davis/BARD_deployments_all_2022-06-24.rds")) # query prior to the Sept 2022 one
 ans = bd[bd$Receiver_ser_num == 546698, ] # decker island from Jan 17-July 23; exact missing period
 
 # add this deployment info in:
