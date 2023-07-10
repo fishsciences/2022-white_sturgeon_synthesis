@@ -39,7 +39,7 @@ DEPS_RAW = $(addprefix $(DATA_DIR), 																	\
 
 YOLO_DB = $(addprefix $(DATA_DIR), /Yolo/ybt_database.sqlite)
 
-TARGET = data_clean/alltags.rds data_clean/alldeps.rds data_clean/alldets.rds data_clean/all_rec_locs.csv data_clean/orphan_dets.csv
+TARGET = data_clean/alltags.rds data_clean/alldeps.rds data_clean/alldets.rds data_clean/all_rec_locs.csv data_clean/det_rec_locs.csv data_clean/orphan_dets.csv
 
 data/data_dir_local.rds : R/set_data_dir.R
 	$(RSCRIPT)
@@ -64,7 +64,7 @@ data_clean/alldeps.rds : R/clean_deployments.R															\
 data_clean/alldets.rds : R/qaqc_detections.R data_clean/alldeps.rds data/WST_detections.rds data_clean/alltags.rds  | data_clean
 	$(RSCRIPT)
 
-data_clean/all_rec_locs.csv : R/receiver_map.R data_clean/alldeps.rds | data_clean
+data_clean/all_rec_locs.csv data_clean/det_rec_locs.csv : R/receiver_map.R data_clean/alldeps.rds  data_clean/alldets.rds | data_clean
 	$(RSCRIPT)
 
 data_clean/orphan_dets.csv : R/qaqc_detections.R data_clean/alldeps.rds data/WST_detections.rds data_clean/alltags.rds | data_clean

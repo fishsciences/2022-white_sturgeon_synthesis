@@ -23,7 +23,7 @@ v[v>1]
 
 write.csv(cgis, "data_clean/all_rec_locs.csv") # for use in google earth; this is what we made Basins.shp from
 
-
+# in-session map
 leaflet(cgis) %>% 
   addTiles() %>% 
   addCircleMarkers(label = allgis$Location_name, 
@@ -32,6 +32,11 @@ leaflet(cgis) %>%
                                     cgis$Origin == "SJR 2022" ~ "purple"),
                    radius = 0.8,
                    labelOptions = labelOptions(permanent = FALSE, noHide = FALSE)) 
+
+# pare down to only recs w/ detections
+d = readRDS("data_clean/alldets.rds")
+det_recs = cgis[cgis$Location_name %in% unique(d$Location_name), ]
+write.csv(det_recs, "data_clean/det_rec_locs.csv") # for use in google earth + simplifying routes
 
 
 # for plotting in google earth, optional bounds:
