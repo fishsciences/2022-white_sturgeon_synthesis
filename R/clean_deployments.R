@@ -1,14 +1,10 @@
 # Parse Deployment tables
 # M. Johnston
-
 library(data.table)
 library(telemetry)
 library(lubridate)
 source("R/overlap_funs.R")
 data.dir = readRDS("data/data_dir_local.rds")
-
-## Receiver bounds: Longitude -120.0, Latitude 37.2
-## Detection bounds: "2010-08-17" - "2022-01-01"
 
 # 1. Subset detections to date range, and make list of receivers in the detections 
 # 2. Check that those receivers are in the PATH + YOLO + SJR deployments 
@@ -161,6 +157,10 @@ alldeps = rbind(ydep[ , cols_keep],
                 path[ , cols_keep],
                 sjr[ , cols_keep])
 
+
+#---------------------------------------------------------#
+# Fixes for individual cases
+#---------------------------------------------------------#
 # insert missing deployment for Santa Clara Shoals 1N rec, per Matt Pagel email circa 2013:
 scs = alldeps[alldeps$Receiver == 101256, ][2:3, ]
 stopifnot(scs$Start[2] == structure(1361529669, class = c("POSIXct", "POSIXt"), tzone = "Etc/GMT+8"))
@@ -173,6 +173,13 @@ scs_ins$Notes = "this row added in parse_deployments.R, Dec 2022"
 
 alldeps = rbind(alldeps, scs_ins)
 alldeps = alldeps[order(alldeps$Receiver, alldeps$Start), ]
+
+# this receiver has incorrect lat/lon, as noted in Issue #14; replace with the lat/lon of its grouped rec
+MidR_S1_lat = unique(alldeps$Latitude[alldeps$Location_name == "MidR_S1"])
+MidR_S1_lon = unique(alldeps$Longitude[alldeps$Location_name == "MidR_S1"])
+
+alldeps$Latitude[alldeps$Location_name == "MidR_S2"] <- MidR_S1_lat
+alldeps$Longitude[alldeps$Location_name == "MidR_S2"] <- MidR_S1_lon
 
 # manual checks
 summary(unique(alldeps$Receiver))
