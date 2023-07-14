@@ -39,7 +39,12 @@ cols_keep = c("Receiver", "Location_name", "Latitude", "Longitude", "Basin", "Ta
 
 good = good[ , cols_keep]
 
-# these are all the detections that fall within a legit receiver window, no fuzzy match necessary
+# Removing the Feather River RT receivers as their locations are ambiguous:
+#---------------------------------------------------------#
+fr = good[good$Location_name %in% c("SR_AbvFeather1_RT", "SR_AbvFeather2_RT"), ]
+good = anti_join(good, fr)
+
+# these are all the detections that fall within a legit receiver window with known locations, no fuzzy match necessary
 saveRDS(good, "data_clean/alldets.rds")
 
 # create df of orphans:
