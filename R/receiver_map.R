@@ -39,14 +39,6 @@ det_recs = cgis[cgis$Location_name %in% unique(d$Location_name), ]
 write.csv(det_recs, "data_clean/det_rec_locs.csv") # for use in google earth + simplifying routes
 
 
-# for plotting in google earth, optional bounds:
-if(FALSE){
-  deps = readRDS("data_clean/alldeps.rds")
-  # bounds
-  deps = subset(deps, Longitude > -122.65 & Longitude < -120.0 & Latitude > 37.1 & Latitude < 44) # cuts out the Pt_Reyes receivers, but we don't need to
-  write.csv(deps, "data_clean/alldeps.csv")
-  
-}
 # visualize gaps
 
 y = allgis[allgis$Origin == "YOLO 2020", ]
@@ -56,7 +48,6 @@ y$jday_start = as.integer(format(y$Start, "%j"))
 y$jday_end = as.integer(format(y$End, "%j"))
 
 # 244 = Sept 1, 135 = May 15th
-
 
 yt = y[y$Location_name == "YBGL", ]
 
