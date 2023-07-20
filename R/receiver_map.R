@@ -39,6 +39,20 @@ det_recs = cgis[cgis$Location_name %in% unique(d$Location_name), ]
 write.csv(det_recs, "data_clean/det_rec_locs.csv") # for use in google earth + simplifying routes
 
 
+# make map of grouped receiver locations where we have detections
+g = readRDS("data_clean/alldets_grouped.rds")
+i = duplicated(g[ ,c("GenLoc", "Latitude", "Longitude")])
+g2 = g[!i, ]
+
+leaflet(g2) %>% 
+  addTiles() %>% 
+  addCircleMarkers(label = g2$GenLoc,
+                   radius = 0.8,
+                   labelOptions = labelOptions(permanent = FALSE, noHide = FALSE))
+
+write.csv(g2, "data_clean/det_rec_locs_grouped.csv")
+
+
 # visualize gaps
 
 y = allgis[allgis$Origin == "YOLO 2020", ]

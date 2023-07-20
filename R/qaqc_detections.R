@@ -42,7 +42,7 @@ good = good[ , cols_keep]
 # Removing the Feather River RT receivers as their locations are ambiguous:
 #---------------------------------------------------------#
 fr = good[good$Location_name %in% c("SR_AbvFeather1_RT", "SR_AbvFeather2_RT"), ]
-good = anti_join(good, fr)
+good = dplyr::anti_join(good, fr)
 
 # these are all the detections that fall within a legit receiver window with known locations, no fuzzy match necessary
 saveRDS(good, "data_clean/alldets.rds")
@@ -52,7 +52,6 @@ orphdf = single[orphan_idx, ]
 
 # write .csvs of remaining orphan detections - will reference if we need to complete a fish's history
 write.csv(orphdf, "data_clean/orphan_dets.csv", row.names = FALSE)
-
 
 if(FALSE){ # make test detections and deployments set for telemetry::find_orphans()
   x = orph[orph$Receiver == 6279, ]
