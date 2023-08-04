@@ -4,7 +4,7 @@
 library(dplyr)
 library(ggplot2)
 
-dets = readRDS("data_clean/alldets.rds")
+dets = readRDS("data_clean/alldets_grouped.rds")
 
 dets %>% 
   filter(StudyID == "YOLO WST") -> y
@@ -37,26 +37,22 @@ ds = telemetry::tag_tales(bb2, "TagID", "Location_name", Datetime_col = "DateTim
 dss = split(ds, ds$TagID)
 
 sapply(dss, function(df) {
-  ggplot(df, aes(x = arrival, y = reorder(Location_name, Latitude))) +
+  ggplot(df, aes(x = arrival, y = reorder(GenLoc, Longitude))) +
     geom_point(alpha = 0.6, size = 1,
                aes(color = Basin)) +
     facet_wrap(~Year, scales = "free", ncol = 2) +
-    labs(y = NULL, x = NULL, title = sprintf("TagID: %s", unique(df$TagID))) +
+    labs(y = NULL, 
+         x = NULL, 
+         title = sprintf("TagID: %s", unique(df$TagID))) +
     theme_bw() +
     scale_color_viridis_d() +
       theme(axis.text = element_text(size = 7))
-  ggsave(sprintf("output/fishtracks/%s.png", unique(df$TagID)), height = 8.5, width = 11)
+  ggsave(sprintf("output/fishtracks2/%s.png", unique(df$TagID)), height = 8.5, width = 11)
 })
 
 
-str(x2)
 length(unique(ds$TagID))
 length(unique(dets$TagID))
-
-ggplot(x2, aes(x = arrival, y = reorder(Location_name, Latitude))) +
-  geom_point(alpha = 0.6, size = 1,
-             aes(color = Basin)) +
-  facet_wrap(~Year, scales = "free", ncol = 2)
 
 ## examples: "A69-1303-63038", 2016, 2019
 ##            A69-1303-63044, 2016
