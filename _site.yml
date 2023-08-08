@@ -1,0 +1,8 @@
+name: "wst-synthesis"
+navbar:
+  title: "White Sturgeon telemetry synthesis project"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "About"
+      href: about.html
