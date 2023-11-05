@@ -16,7 +16,7 @@ deps = readRDS("data_clean/alldeps.rds")
 deps = deps[ , c("Location_name", "Latitude", "Longitude", "Basin")]
 
 # this is only the receivers that contain detections; it was made by writing unique(alldets$location_name) to a csv, and then manually adding grouped locations as GenLoc:
-stns = read.csv("data_clean/alldets_location_names.csv")
+stns = read.csv(file.path(data_dir, "spatial/alldets_location_names.csv"))
 # fix some typos
 stns$GenLoc[stns$GenLoc == "GeorgSloughN2"] <- "Georg_SloughN2"
 stns$GenLoc[stns$GenLoc == "MidR_N_of_OR3"] <- "MidR_N_of_OR2"
