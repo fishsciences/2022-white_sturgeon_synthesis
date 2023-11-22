@@ -45,8 +45,8 @@ bard_tmp = tmp[ !i, cols]
 stopifnot(nrow(tmp) - nrow(bard_tmp) == sum(i)) # should have only removed the dups
 
 # SJR Detections
-data_dir = file.path(data.dir, "Lodi/Lodi_DC/")
-files = list.files(path = data_dir, pattern = ".csv", full.names = TRUE, recursive = TRUE)
+sjr_dir = file.path(data.dir, "Lodi/Lodi_DC")
+files = list.files(path = sjr_dir, pattern = ".csv", full.names = TRUE, recursive = TRUE)
 dd = do.call(rbind, lapply(files, read.csv))
 
 # Clean up column names
@@ -64,7 +64,6 @@ dd = dplyr::select(dd,
 # Check
 tz(dd$DateTimeUTC)
 range(dd$DateTimeUTC)
-dd$DateTimeUTC = as.character(dd$DateTimeUTC)
 # Combine and find dups
 ltmp = as.data.table(dd[ , cols])
 # Need to exclude NA cols, because not marked as dups
@@ -76,19 +75,22 @@ sjr = sjr[!i, ]
 stopifnot(nrow(ltmp) - nrow(sjr) == sum(i))
 
 all_dets = rbind(bard_tmp, sjr)
-all_dets$DateTimeUTC = as.POSIXct(all_dets$DateTimeUTC, tz = "UTC")
-all_dets = all_dets[all_dets$DateTimeUTC > ymd_hms("2010-08-17 00:00:00", tz = "UTC"), ] # study
 
 # subset detections down to just our study fish
-tags = readRDS("data_clean/alltags.rds") # made in R/combine_tags.R
+tags = as.data.frame(readRDS("data_clean/alltags.rds")) # made in R/combine_tags.R
 
 dd = subset(all_dets, TagID %in% tags$TagCode)
-dd = tidyr::separate(dd, col = Receiver, sep = "-", into = c("Freq", "Receiver"))
-dd$Receiver = as.integer(dd$Receiver)
 dd = dd[ , c("TagID", "DateTimeUTC", "Receiver", "DetOrigin")]
+
+dd$DateTimeUTC = ymd_hms(dd$DateTimeUTC, tz = "UTC")
+failed_indices <- is.na(dd$DateTimeUTC)
+dd <- dd[!failed_indices, ]
+dd = dd[dd$DateTimeUTC > ymd_hms("2010-08-17 00:00:00", tz = "UTC"), ] # study date boundaries
+dd$Receiver <- sub("VR2W-|VR2Tx-", "", dd$Receiver)
+dd$Receiver = as.integer(dd$Receiver)
 
 dd = merge(dd, tags[ , c("TagCode", "StudyID")], by.x = "TagID", by.y = "TagCode") # slow; better to summarise/table by TagCode first, and then join that smaller table
 
-dd$DateTimePST = with_tz(dd$DateTimeUTC, tz = "Etc/GMT+8")
+dd$DateTimePST = with_tz(dd$DateTimeUTC, tz = "Etc/GMT+8") # add a PST column
 
 saveRDS(dd, "data/WST_detections.rds")
