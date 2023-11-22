@@ -83,13 +83,13 @@ dd = subset(all_dets, TagID %in% tags$TagCode)
 dd = dd[ , c("TagID", "DateTimeUTC", "Receiver", "DetOrigin")]
 
 dd$DateTimeUTC = ymd_hms(dd$DateTimeUTC, tz = "UTC")
-failed_indices <- is.na(dd$DateTimeUTC)
+failed_indices <- is.na(dd$DateTimeUTC) # remove detections with no associated timestamp
 dd <- dd[!failed_indices, ]
 dd = dd[dd$DateTimeUTC > ymd_hms("2010-08-17 00:00:00", tz = "UTC"), ] # study date boundaries
 dd$Receiver <- sub("VR2W-|VR2Tx-", "", dd$Receiver)
 dd$Receiver = as.integer(dd$Receiver)
 
-dd = merge(dd, tags[ , c("TagCode", "StudyID")], by.x = "TagID", by.y = "TagCode") # slow; better to summarise/table by TagCode first, and then join that smaller table
+dd = merge(dd, tags[ , c("TagCode", "StudyID")], by.x = "TagID", by.y = "TagCode")
 
 dd$DateTimePST = with_tz(dd$DateTimeUTC, tz = "Etc/GMT+8") # add a PST column
 
