@@ -41,13 +41,15 @@ YOLO_DB = $(addprefix $(DATA_DIR), /Yolo/ybt_database.sqlite)
 
 GIS_DB = $(addprefix $(DATA_DIR), /GIS/)
 
-TARGET = data_clean/alltags.rds 																					\
+TARGET = data/data_dir_local.rds																					\
+					data_clean/alltags.rds 																					\
 					data_clean/alldeps.rds																					\
 					data_clean/alldets.rds																					\
 					data_clean/alldets_grouped.rds																	\
 					data_clean/all_rec_locs.csv																			\
 					data_clean/det_rec_locs.csv																			\
-					data_clean/orphan_dets.csv
+					data_clean/orphan_dets.csv																			\
+					data_clean/det_rec_locs_grouped.csv
 
 data/data_dir_local.rds : R/set_data_dir.R
 	$(RSCRIPT)
