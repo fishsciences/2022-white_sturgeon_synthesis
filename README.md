@@ -87,3 +87,54 @@ data_clean/all_rec_locs.csv: made in R/receiver_map.R
 * Source: data.dir/Lodi/LFWO_SJR_WST_Acoustic_Tags.xlsx
 * Script: R/combine_tags.R
 * Output: data_clean/alltags.rds, data_clean/alltags.csv (for collaborators)
+
+
+## Final rds files for EDI publication:
+
+### Tags
+
+`data.frame` with 338 obs of 11 variables:
+*StudyID (chr)
+*DateTagged (date, yyyy-mm-dd)
+*TagID (chr)
+*ReleaseLocation (chr)
+*FL_cm (num)
+*Sex (chr)
+*TagEnd (date, yyyy-mm-dd)
+*TagLocLatitude (num)
+*TagLocLongitude (num)
+
+## Detections Grouped
+TagID (chr)
+Receiver
+DateTimePST
+
+## Deployments Grouped
+GenLoc
+GenLocLatitude
+GenLocLongitude
+Receiver
+Basin
+StartPST
+EndPST
+Origin
+
+### Detections ungrouped
+TagID (chr)
+Receiver
+DateTimePST
+
+### Deployments
+`data.frame` with 4891 observations of 11 variables:
+Location_name
+Receiver
+StartPST
+EndPST
+Latitude
+Longitude
+Origin
+GenLoc
+GenLocLatitude
+GenLocLongitude
+Basin
+

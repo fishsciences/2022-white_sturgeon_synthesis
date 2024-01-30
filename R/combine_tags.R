@@ -24,13 +24,15 @@ keepcols = c("StudyID",
              "Release_location",
              "FL_cm",
              "Sex",
-             "TagEnd")
+             "TagEnd",
+             "TagLocLatitude",
+             "TagLocLongitude")
 # ------------------------------------
 # San Joaquin River Tags
 #-------------------------------------
 d = readxl::read_excel(file.path(data.dir, "Lodi/LFWO_SJR_WST_Acoustic_Tags.xlsx"))
 
-d = d[ , c("TagCode", "DateTagged", "FL_cm", "Sex")]
+d = d[ , c("TagCode", "DateTagged", "FL_cm", "Sex", "TagLocLatitude", "TagLocLongitude")]
 
 d = tidyr::separate(d, TagCode, into = c("Freq_kHz", "CodeSpace", "TagID"), remove = FALSE, convert = TRUE)
 
@@ -41,9 +43,10 @@ d$StudyID = "SJR WST"
 range(d$DateTagged)
 
 d$TagEnd = as.POSIXct((d$DateTagged + 3650), format = "%Y-%m-%d")
+d$TagLocLatitude = round(d$TagLocLatitude, 5)
+d$TagLocLongitude = round(d$TagLocLongitude, 5)
 
 stopifnot(all(keepcols %in% colnames(d)))
-
 d = d[ , keepcols]
 
 # ------------------------------------
@@ -66,9 +69,13 @@ y2$Release_location = "Yolo Bypass"
 y2$StudyID = "YOLO WST"
 y2[ , c("TagID", "CodeSpace")] <- lapply(y2[ , c("TagID", "CodeSpace")], as.integer)
 
+y2$TagLocLatitude = round(38.466853, digits = 5)
+y2$TagLocLongitude = round(-121.591044, digits = 5)
+
 stopifnot(all(keepcols %in% colnames(y2)))
 
 y2 = y2[ , keepcols]
+
 
 # ------------------------------------
 # Sacramento River Tags
@@ -81,7 +88,9 @@ m = m[, c(
   "Fork.length.cm.",
   "Sex",
   "Tag.ID.",
-  "Tag.Type"
+  "Tag.Type",
+  "Latitude.N",
+  "Longitude.W"
 )]
 # get rid of v13s
 m = m[m$Tag.Type != "v13" & !is.na(m$`Tag.ID.`), ]
@@ -90,7 +99,9 @@ m = dplyr::rename(m,
                   FL_cm = Fork.length.cm., 
                   DateTagged = Date,
                   Release_location = Location,
-                  TagID = Tag.ID.)
+                  TagID = Tag.ID.,
+                  TagLocLatitude = Latitude.N,
+                  TagLocLongitude = Longitude.W)
 
 m$DateTagged = as.Date(m$Date, format = "%m/%d/%y")
 
@@ -101,7 +112,19 @@ m$StudyID = "SAC WST"
 
 m$TagEnd = as.POSIXct((m$DateTagged + 3650), format = "%Y-%m-%d")
 
-m = dplyr::select(m, TagID, DateTagged, Release_location, FL_cm, Sex, StudyID, CodeSpace, TagCode, TagEnd)
+m = dplyr::select(m, TagID, 
+                  DateTagged, 
+                  Release_location, 
+                  FL_cm, Sex, 
+                  StudyID, 
+                  CodeSpace, 
+                  TagCode, 
+                  TagEnd, 
+                  TagLocLatitude, 
+                  TagLocLongitude)
+
+m$TagLocLatitude = round(as.numeric(m$TagLocLatitude), 5)
+m$TagLocLongitude = round(as.numeric(m$TagLocLongitude), 5)
 
 stopifnot(all(keepcols %in% colnames(m)))
 
@@ -128,5 +151,5 @@ table(all.tags$Release_location)
 
 # final database formatting
 all.tags = dplyr::rename(all.tags, ReleaseLocation = Release_location)
-
+all.tags = as.data.frame(all.tags)
 saveRDS(all.tags, "data_clean/alltags.rds")

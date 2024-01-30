@@ -36,18 +36,30 @@ ds = telemetry::tag_tales(bb2, "TagID", "Location_name", Datetime_col = "DateTim
 
 dss = split(ds, ds$TagID)
 
-sapply(dss, function(df) {
-  ggplot(df, aes(x = arrival, y = reorder(GenLoc, Longitude))) +
+dets %>% 
+  filter(StudyID == "SAC WST" | StudyID == "YOLO WST") %>% 
+  filter(!duplicated(TagID)) %>% 
+  pull(TagID) -> sacfish
+
+yofish = filter(dets, TagID %in% sacfish)
+unique(sacfish$Basin)
+
+stracks = telemetry::tag_tales(sacfish, "TagID", "Location_name", "DateTimePST")
+stracks$Year = lubridate::year(stracks$DateTimePST)
+ss = split(stracks, stracks$TagID)
+
+sapply(ss, function(df) {
+  ggplot(df, aes(x = arrival, y = reorder(GenLoc, Latitude))) +
     geom_point(alpha = 0.6, size = 1,
                aes(color = Basin)) +
-    facet_wrap(~Year, scales = "free", ncol = 2) +
+  #  facet_wrap(~Year, scales = "free", ncol = 2) +
     labs(y = NULL, 
          x = NULL, 
          title = sprintf("TagID: %s", unique(df$TagID))) +
     theme_bw() +
     scale_color_viridis_d() +
       theme(axis.text = element_text(size = 7))
-  ggsave(sprintf("output/fishtracks2/%s.png", unique(df$TagID)), height = 8.5, width = 11)
+  ggsave(sprintf("output/sacfish_tracks/%s.png", unique(df$TagID)), height = 8.5, width = 11)
 })
 
 
