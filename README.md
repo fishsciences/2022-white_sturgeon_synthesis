@@ -8,20 +8,22 @@ Data sources and recipes:
 
 The raw data (detections, deployments, and tags) is stored on the CFS Dropbox (New Projects External Share/WST_synthesis). Access gets configured for individual users in R/set_data_dir.R, which saves an RDS file of the character string for the filepath; this RDS is read in to set the data.dir at the top of most of the qaqc scripts.
 
-The order of building the qaqc'd data is:
-    1. R/combine_tags.R
-    2. R/combine_detections.R
-    3. R/get_bard_deployments.R # preps the BARD deployments table from raw data
-    4. R/clean_deployments.R # combines deployments tables and adds basin
-    5. R/qaqc_detections.R # removes orphan detections
-    6. R/make_sqlite_db.R
-    
+The makefile is configured to run the entire read/QAQC/write data cleaning process. `make all` makes the following data files:
 
-Intermediate Products:
+* `alltags.rds`
+* `alldeps.rds`
+* `alldets.rds`
+* `alldets_grouped.rds`
+
+The published dataset on zenodo has some redundant columns removed; this process can be viewed or re-created in `analysis/zenodo_final.R`.
+
+Several intermediate products are also made; these may have contextual value but are not part of the final dataset; see the makefile for details.
 
 data_clean/all_rec_locs.csv: made in R/receiver_map.R
 
-# Raw Detections
+# Data sources
+
+## Raw Detections
 
 ### Yolo
 * Source: ybt .sqlite database
@@ -87,54 +89,3 @@ data_clean/all_rec_locs.csv: made in R/receiver_map.R
 * Source: data.dir/Lodi/LFWO_SJR_WST_Acoustic_Tags.xlsx
 * Script: R/combine_tags.R
 * Output: data_clean/alltags.rds, data_clean/alltags.csv (for collaborators)
-
-
-## Final rds files for EDI publication:
-
-### Tags
-
-`data.frame` with 338 obs of 11 variables:
-*StudyID (chr)
-*DateTagged (date, yyyy-mm-dd)
-*TagID (chr)
-*ReleaseLocation (chr)
-*FL_cm (num)
-*Sex (chr)
-*TagEnd (date, yyyy-mm-dd)
-*TagLocLatitude (num)
-*TagLocLongitude (num)
-
-## Detections Grouped
-TagID (chr)
-Receiver
-DateTimePST
-
-## Deployments Grouped
-GenLoc
-GenLocLatitude
-GenLocLongitude
-Receiver
-Basin
-StartPST
-EndPST
-Origin
-
-### Detections ungrouped
-TagID (chr)
-Receiver
-DateTimePST
-
-### Deployments
-`data.frame` with 4891 observations of 11 variables:
-Location_name
-Receiver
-StartPST
-EndPST
-Latitude
-Longitude
-Origin
-GenLoc
-GenLocLatitude
-GenLocLongitude
-Basin
-
